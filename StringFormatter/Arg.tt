@@ -1,0 +1,42 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+
+<# for(int i = 1; i <= 8; i++) {
+    var simpleName = "Arg" + i;
+    var fullName = simpleName + "<T0";
+    for (int j = 1; j < i; j++) {
+        fullName += ", T" + j;
+    }
+    fullName += ">";
+#>
+struct <#=fullName#> : IArgSet {
+<#for(int j = 0; j < i; j++) { #>    T<#=j#> t<#=j#>;
+<#}#>
+
+    public int Count => <#=i#>;
+
+    public <#=simpleName#> (T0 t0<#for(int j = 1; j < i; j++) { #>, T<#=j#> t<#=j#><#}#>) {
+<#for(int j = 0; j < i; j++) { #>        this.t<#=j#> = t<#=j#>;
+<#}#>
+    }
+
+    public void Format (StringFormatter formatter, int index) {
+        Accessors[index](formatter, ref this);
+    }
+
+<#for(int j = 0; j < i; j++) {
+#>    static void Format<#=j#> (StringFormatter formatter, ref <#=fullName#> arg) {
+        formatter.Append(arg.t<#=j#>);
+    }
+
+<#}#>
+    delegate void Accessor (StringFormatter formatter, ref <#=fullName#> arg);
+    static readonly Accessor[] Accessors = {
+        Format0<#for(int j = 1; j < i; j++) { #>,
+        Format<#=j#><#}#>
+
+    };
+}
+
+<#
+}#>
