@@ -37,7 +37,9 @@ namespace System.Text.Formatting {
         public static void FormatInt32 (StringFormatter formatter, int value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
-            switch (fmt) {
+
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (fmt & 0xFFDF) {
                 case 'G':
                     if (digits > 0)
                         goto default;
@@ -49,6 +51,8 @@ namespace System.Text.Formatting {
                     break;
 
                 case 'X':
+                    // fmt-('X'-'A'+1) gives us the base hex character in either
+                    // uppercase or lowercase, depending on the casing of fmt
                     Int32ToHexStr(formatter, (uint)value, fmt - ('X' - 'A' + 10), digits);
                     break;
 
@@ -68,7 +72,9 @@ namespace System.Text.Formatting {
         public static void FormatUInt32 (StringFormatter formatter, uint value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
-            switch (fmt) {
+
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (fmt & 0xFFDF) {
                 case 'G':
                     if (digits > 0)
                         goto default;
@@ -80,6 +86,8 @@ namespace System.Text.Formatting {
                     break;
 
                 case 'X':
+                    // fmt-('X'-'A'+1) gives us the base hex character in either
+                    // uppercase or lowercase, depending on the casing of fmt
                     Int32ToHexStr(formatter, value, fmt - ('X' - 'A' + 10), digits);
                     break;
 
@@ -96,8 +104,79 @@ namespace System.Text.Formatting {
             }
         }
 
+        public static void FormatInt64 (StringFormatter formatter, long value, StringView specifier, CachedCulture culture) {
+            int digits;
+            var fmt = ParseFormatSpecifier(specifier, out digits);
+
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (fmt & 0xFFDF) {
+                case 'G':
+                    if (digits > 0)
+                        goto default;
+                    else
+                        goto case 'D';
+
+                case 'D':
+                    Int64ToDecStr(formatter, value, digits, culture.NegativeSign);
+                    break;
+
+                case 'X':
+                    // fmt-('X'-'A'+1) gives us the base hex character in either
+                    // uppercase or lowercase, depending on the casing of fmt
+                    Int64ToHexStr(formatter, (ulong)value, fmt - ('X' - 'A' + 10), digits);
+                    break;
+
+                default:
+                    var number = new Number();
+                    var buffer = stackalloc char[MaxNumberDigits + 1];
+                    number.Digits = buffer;
+                    Int64ToNumber(value, ref number);
+                    if (fmt != 0)
+                        NumberToString(formatter, ref number, fmt, digits, culture);
+                    else
+                        NumberToCustomFormatString(formatter, ref number, specifier, culture);
+                    break;
+            }
+        }
+
+        public static void FormatUInt64 (StringFormatter formatter, ulong value, StringView specifier, CachedCulture culture) {
+            int digits;
+            var fmt = ParseFormatSpecifier(specifier, out digits);
+
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (fmt & 0xFFDF) {
+                case 'G':
+                    if (digits > 0)
+                        goto default;
+                    else
+                        goto case 'D';
+
+                case 'D':
+                    UInt64ToDecStr(formatter, value, digits);
+                    break;
+
+                case 'X':
+                    // fmt-('X'-'A'+1) gives us the base hex character in either
+                    // uppercase or lowercase, depending on the casing of fmt
+                    Int64ToHexStr(formatter, value, fmt - ('X' - 'A' + 10), digits);
+                    break;
+
+                default:
+                    var number = new Number();
+                    var buffer = stackalloc char[MaxNumberDigits + 1];
+                    number.Digits = buffer;
+                    UInt64ToNumber(value, ref number);
+                    if (fmt != 0)
+                        NumberToString(formatter, ref number, fmt, digits, culture);
+                    else
+                        NumberToCustomFormatString(formatter, ref number, specifier, culture);
+                    break;
+            }
+        }
+
         static void NumberToString (StringFormatter formatter, ref Number number, char format, int maxDigits, CachedCulture culture, bool isDecimal = false) {
-            switch (format) {
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (format & 0xFFDF) {
                 case 'C':
                     {
                         var cultureData = culture.CurrencyData;
@@ -383,7 +462,7 @@ namespace System.Text.Formatting {
                     bufferLength = negativeLength + maxDigits;
             }
 
-            var buffer = stackalloc char[bufferLength * sizeof(char)];
+            var buffer = stackalloc char[bufferLength];
             var p = Int32ToDecChars(buffer + bufferLength, value >= 0 ? (uint)value : (uint)-value, digits);
             if (value < 0) {
                 // add the negative sign
@@ -410,6 +489,70 @@ namespace System.Text.Formatting {
 
             var p = Int32ToHexChars(buffer + 100, value, hexBase, digits);
             formatter.Append(p, (int)(buffer + 100 - p));
+        }
+
+        static void Int64ToDecStr (StringFormatter formatter, long value, int digits, string negativeSign) {
+            if (digits < 1)
+                digits = 1;
+
+            var sign = High32((ulong)value);
+            var maxDigits = digits > 20 ? digits : 20;
+            var bufferLength = maxDigits > 100 ? maxDigits : 100;
+
+            if (sign < 0) {
+                value = -value;
+                var negativeLength = negativeSign.Length;
+                if (negativeLength > bufferLength - maxDigits)
+                    bufferLength = negativeLength + maxDigits;
+            }
+
+            var buffer = stackalloc char[bufferLength];
+            var p = buffer + bufferLength;
+            var uv = (ulong)value;
+            while (High32(uv) != 0) {
+                p = Int32ToDecChars(p, Int64DivMod(ref uv), 9);
+                digits -= 9;
+            }
+
+            p = Int32ToDecChars(p, Low32(uv), digits);
+            if (sign < 0) {
+                // add the negative sign
+                for (int i = negativeSign.Length - 1; i >= 0; i--)
+                    *(--p) = negativeSign[i];
+            }
+
+            formatter.Append(p, (int)(buffer + bufferLength - p));
+        }
+
+        static void UInt64ToDecStr (StringFormatter formatter, ulong value, int digits) {
+            if (digits < 1)
+                digits = 1;
+
+            var buffer = stackalloc char[100];
+            var p = buffer + 100;
+            while (High32(value) != 0) {
+                p = Int32ToDecChars(p, Int64DivMod(ref value), 9);
+                digits -= 9;
+            }
+
+            p = Int32ToDecChars(p, Low32(value), digits);
+            formatter.Append(p, (int)(buffer + 100 - p));
+        }
+
+        static void Int64ToHexStr (StringFormatter formatter, ulong value, int hexBase, int digits) {
+            var buffer = stackalloc char[100];
+            char* ptr;
+            if (High32(value) != 0) {
+                Int32ToHexChars(buffer + 100, Low32(value), hexBase, 8);
+                ptr = Int32ToHexChars(buffer + 100 - 8, High32(value), hexBase, digits - 8);
+            }
+            else {
+                if (digits < 1)
+                    digits = 1;
+                ptr = Int32ToHexChars(buffer + 100, Low32(value), hexBase, digits);
+            }
+            
+            formatter.Append(ptr, (int)(buffer + 100 - ptr));
         }
 
         static char* Int32ToDecChars (char* p, uint value, int digits) {
@@ -454,32 +597,14 @@ namespace System.Text.Formatting {
                     }
 
                     if (c == 0) {
-                        // ANDing with 0xFFDF has the effect of uppercasing the character
                         digits = n;
-                        return (char)(first & 0xFFDF);
+                        return first;
                     }
                 }
             }
 
             digits = -1;
             return (char)0;
-        }
-
-        static void AppendString (char** buffer, string value) {
-            fixed (char* pinnedString = value)
-            {
-                var length = value.Length;
-                for (var src = pinnedString; src < pinnedString + length; (*buffer)++, src++)
-                    **buffer = *src;
-            }
-        }
-
-        static int StrLen (char* str) {
-            int count = 0;
-            while (*str++ != 0)
-                count++;
-
-            return count;
         }
 
         static void Int32ToNumber (int value, ref Number number) {
@@ -517,6 +642,51 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
+        static void Int64ToNumber (long value, ref Number number) {
+            number.Precision = Int64Precision;
+            if (value >= 0)
+                number.Sign = 0;
+            else {
+                number.Sign = 1;
+                value = -value;
+            }
+
+            var buffer = stackalloc char[Int64Precision + 1];
+            var ptr = buffer + Int64Precision;
+            var uv = (ulong)value;
+            while (High32(uv) != 0)
+                ptr = Int32ToDecChars(ptr, Int64DivMod(ref uv), 9);
+
+            ptr = Int32ToDecChars(ptr, Low32(uv), 0);
+            var len = (int)(buffer + Int64Precision - ptr);
+            number.Scale = len;
+
+            var dest = number.Digits;
+            while (--len >= 0)
+                *dest++ = *ptr++;
+            *dest = '\0';
+        }
+
+        static void UInt64ToNumber (ulong value, ref Number number) {
+            number.Precision = UInt64Precision;
+            number.Sign = 0;
+
+            var buffer = stackalloc char[UInt64Precision + 1];
+            var ptr = buffer + UInt64Precision;
+            while (High32(value) != 0)
+                ptr = Int32ToDecChars(ptr, Int64DivMod(ref value), 9);
+
+            ptr = Int32ToDecChars(ptr, Low32(value), 0);
+
+            var len = (int)(buffer + UInt64Precision - ptr);
+            number.Scale = len;
+
+            var dest = number.Digits;
+            while (--len >= 0)
+                *dest++ = *ptr++;
+            *dest = '\0';
+        }
+
         static void RoundNumber (ref Number number, int pos) {
             var digits = number.Digits;
             int i = 0;
@@ -544,6 +714,37 @@ namespace System.Text.Formatting {
             digits[i] = '\0';
         }
 
+        static void AppendString (char** buffer, string value) {
+            fixed (char* pinnedString = value)
+            {
+                var length = value.Length;
+                for (var src = pinnedString; src < pinnedString + length; (*buffer)++, src++)
+                    **buffer = *src;
+            }
+        }
+
+        static int StrLen (char* str) {
+            int count = 0;
+            while (*str++ != 0)
+                count++;
+
+            return count;
+        }
+
+        static uint Int64DivMod (ref ulong value) {
+            var rem = (uint)(value % 1000000000);
+            value /= 1000000000;
+            return rem;
+        }
+
+        static uint Low32 (ulong value) {
+            return (uint)value;
+        }
+
+        static uint High32 (ulong value) {
+            return (uint)((value & 0xFFFFFFFF00000000) >> 32);
+        }
+
         struct Number {
             public int Precision;
             public int Scale;
@@ -554,5 +755,7 @@ namespace System.Text.Formatting {
         const int MaxNumberDigits = 50;
         const int Int32Precision = 10;
         const int UInt32Precision = 10;
+        const int Int64Precision = 19;
+        const int UInt64Precision = 20;
     }
 }

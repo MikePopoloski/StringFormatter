@@ -58,9 +58,11 @@ namespace System.Text.Formatting {
         }
 
         public void Append (long value, StringView format) {
+            Numeric.FormatInt64(this, value, format, culture);
         }
 
         public void Append (ulong value, StringView format) {
+            Numeric.FormatUInt64(this, value, format, culture);
         }
 
         public void Append (float value, StringView format) {
