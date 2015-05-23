@@ -74,10 +74,14 @@ namespace System.Text.Formatting {
         public void Append (decimal value, StringView format) {
         }
 
-        public void Append (bool value, StringView format) {
+        public void Append (bool value) {
+            if (value)
+                Append(TrueLiteral);
+            else
+                Append(FalseLiteral);
         }
 
-        public void Append (string str, StringView format) {
+        public void Append (string str) {
             foreach (var c in str)
                 buffer[currentCount++] = c;
         }
@@ -244,14 +248,14 @@ namespace System.Text.Formatting {
             else if (typeof(T) == typeof(decimal))
                 Append(*(decimal*)ptr, format);
             else if (typeof(T) == typeof(bool))
-                Append(*(bool*)ptr, format);
+                Append(*(bool*)ptr);
             else if (typeof(T) == typeof(char))
                 Append(*(char*)ptr, format);
             else if (typeof(T) == typeof(string)) {
                 var placeholder = default(T);
                 var tr = __makeref(placeholder);
                 *(IntPtr*)&tr = ptr;
-                Append(__refvalue(tr, string), format);
+                Append(__refvalue(tr, string));
             }
             else {
                 // otherwise, we have an unknown type; extract it from the pointer
@@ -312,6 +316,9 @@ namespace System.Text.Formatting {
 
         const int MaxArgs = 256;
         const int MaxSpacing = 1000000;
+
+        const string TrueLiteral = "True";
+        const string FalseLiteral = "False";
     }
 
     // The point of this class is to allow us to generate a direct call to a known

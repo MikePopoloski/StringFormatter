@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Test {
     struct Blah : IStringFormattable {
         public void Format (StringFormatter formatter, StringView format) {
-            formatter.Append("BLAH!", format);
+            formatter.Append("BLAH!");
         }
     }
 
