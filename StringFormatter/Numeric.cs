@@ -11,7 +11,29 @@ namespace System.Text.Formatting {
     // Also see: https://github.com/dotnet/coreclr/blob/02084af832c2900cf6eac2a168c41f261409be97/src/mscorlib/src/System/Number.cs
     // Standard numeric format string reference: https://msdn.microsoft.com/en-us/library/dwhawy9k%28v=vs.110%29.aspx
 
-    unsafe static class Numeric {
+    unsafe static partial class Numeric {
+        public static void FormatSByte (StringFormatter formatter, sbyte value, StringView specifier, CachedCulture culture) {
+            if (value < 0 && !specifier.IsEmpty) {
+                // if we're negative and doing a hex format, mask out the bits for the conversion
+                char c = specifier.Data[0];
+                if (c == 'X' || c == 'x')
+                    FormatUInt32(formatter, (uint)(value & 0xFF), specifier, culture);
+            }
+
+            FormatInt32(formatter, value, specifier, culture);
+        }
+
+        public static void FormatInt16 (StringFormatter formatter, short value, StringView specifier, CachedCulture culture) {
+            if (value < 0 && !specifier.IsEmpty) {
+                // if we're negative and doing a hex format, mask out the bits for the conversion
+                char c = specifier.Data[0];
+                if (c == 'X' || c == 'x')
+                    FormatUInt32(formatter, (uint)(value & 0xFFFF), specifier, culture);
+            }
+
+            FormatInt32(formatter, value, specifier, culture);
+        }
+
         public static void FormatInt32 (StringFormatter formatter, int value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
@@ -37,6 +59,39 @@ namespace System.Text.Formatting {
                     Int32ToNumber(value, ref number);
                     if (fmt != 0)
                         NumberToString(formatter, ref number, fmt, digits, culture);
+                    else
+                        NumberToCustomFormatString(formatter, ref number, specifier, culture);
+                    break;
+            }
+        }
+
+        public static void FormatUInt32 (StringFormatter formatter, uint value, StringView specifier, CachedCulture culture) {
+            int digits;
+            var fmt = ParseFormatSpecifier(specifier, out digits);
+            switch (fmt) {
+                case 'G':
+                    if (digits > 0)
+                        goto default;
+                    else
+                        goto case 'D';
+
+                case 'D':
+                    UInt32ToDecStr(formatter, value, digits);
+                    break;
+
+                case 'X':
+                    Int32ToHexStr(formatter, value, fmt - ('X' - 'A' + 10), digits);
+                    break;
+
+                default:
+                    var number = new Number();
+                    var buffer = stackalloc char[MaxNumberDigits + 1];
+                    number.Digits = buffer;
+                    UInt32ToNumber(value, ref number);
+                    if (fmt != 0)
+                        NumberToString(formatter, ref number, fmt, digits, culture);
+                    else
+                        NumberToCustomFormatString(formatter, ref number, specifier, culture);
                     break;
             }
         }
@@ -112,7 +167,7 @@ namespace System.Text.Formatting {
                             AppendString(&ptr, cultureData.NegativeSign);
 
                         ptr = FormatScientific(
-                            buffer,
+                            ptr,
                             ref number,
                             maxDigits,
                             format, // TODO: fix casing
@@ -339,6 +394,15 @@ namespace System.Text.Formatting {
             formatter.Append(p, (int)(buffer + bufferLength - p));
         }
 
+        static void UInt32ToDecStr (StringFormatter formatter, uint value, int digits) {
+            var buffer = stackalloc char[100];
+            if (digits < 1)
+                digits = 1;
+
+            var p = Int32ToDecChars(buffer + 100, value, digits);
+            formatter.Append(p, (int)(buffer + 100 - p));
+        }
+
         static void Int32ToHexStr (StringFormatter formatter, uint value, int hexBase, int digits) {
             var buffer = stackalloc char[100];
             if (digits < 1)
@@ -438,6 +502,21 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
+        static void UInt32ToNumber (uint value, ref Number number) {
+            number.Precision = UInt32Precision;
+            number.Sign = 0;
+
+            var buffer = stackalloc char[UInt32Precision + 1];
+            var ptr = Int32ToDecChars(buffer + UInt32Precision, value, 0);
+            var len = (int)(buffer + UInt32Precision - ptr);
+            number.Scale = len;
+
+            var dest = number.Digits;
+            while (--len >= 0)
+                *dest++ = *ptr++;
+            *dest = '\0';
+        }
+
         static void RoundNumber (ref Number number, int pos) {
             var digits = number.Digits;
             int i = 0;
@@ -474,5 +553,6 @@ namespace System.Text.Formatting {
 
         const int MaxNumberDigits = 50;
         const int Int32Precision = 10;
+        const int UInt32Precision = 10;
     }
 }

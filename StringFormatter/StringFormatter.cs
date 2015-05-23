@@ -31,11 +31,30 @@ namespace System.Text.Formatting {
                 buffer[currentCount++] = c;
         }
 
+        public void Append (sbyte value, StringView format) {
+            Numeric.FormatSByte(this, value, format, culture);
+        }
+
+        public void Append (byte value, StringView format) {
+            // widening here is fine
+            Numeric.FormatUInt32(this, value, format, culture);
+        }
+
+        public void Append (short value, StringView format) {
+            Numeric.FormatInt16(this, value, format, culture);
+        }
+
+        public void Append (ushort value, StringView format) {
+            // widening here is fine
+            Numeric.FormatUInt32(this, value, format, culture);
+        }
+
         public void Append (int value, StringView format) {
             Numeric.FormatInt32(this, value, format, culture);
         }
 
         public void Append (uint value, StringView format) {
+            Numeric.FormatUInt32(this, value, format, culture);
         }
 
         public void Append (long value, StringView format) {

@@ -14,7 +14,7 @@ namespace Test {
     }
 
     class Program {
-        static readonly string formatTest = "Foo {0,13:x} and bar!! {1,-15:P}bah";
+        static readonly string formatTest = "Foo {0,13:e} and bar!! {1,-15:P}bah";
 
         static void Main (string[] args) {
             var formatter = new StringFormatter();
