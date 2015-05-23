@@ -45,6 +45,7 @@
     <Compile Include="Numeric.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringFormatter.cs" />
+    <Compile Include="StringView.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Arg.tt">

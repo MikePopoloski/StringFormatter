@@ -2,12 +2,14 @@
 using System.Globalization;
 using System.Reflection;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace System.Text.Formatting {
     public unsafe class StringFormatter {
         CachedCulture culture;
         char[] buffer;
         int currentCount;
+        List<char> specifierBuffer;
 
         public StringFormatter ()
             : this(128) {
@@ -16,6 +18,8 @@ namespace System.Text.Formatting {
         public StringFormatter (int capacity) {
             buffer = new char[capacity];
             culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
+
+            specifierBuffer = new List<char>();
         }
 
         public void Append (char c) {
@@ -24,35 +28,35 @@ namespace System.Text.Formatting {
 
         public void Append (char c, int count) {
             for (int i = 0; i < count; i++)
-                buffer[count++] = c;
+                buffer[currentCount++] = c;
         }
 
-        public void Append (int value) {
-            Numeric.FormatInt32(this, value, "P", culture);
+        public void Append (int value, StringView format) {
+            Numeric.FormatInt32(this, value, format, culture);
         }
 
-        public void Append (uint value) {
+        public void Append (uint value, StringView format) {
         }
 
-        public void Append (long value) {
+        public void Append (long value, StringView format) {
         }
 
-        public void Append (ulong value) {
+        public void Append (ulong value, StringView format) {
         }
 
-        public void Append (float value) {
+        public void Append (float value, StringView format) {
         }
 
-        public void Append (double value) {
+        public void Append (double value, StringView format) {
         }
 
-        public void Append (decimal value) {
+        public void Append (decimal value, StringView format) {
         }
 
-        public void Append (bool value) {
+        public void Append (bool value, StringView format) {
         }
 
-        public void Append (string str) {
+        public void Append (string str, StringView format) {
             foreach (var c in str)
                 buffer[currentCount++] = c;
         }
@@ -60,69 +64,6 @@ namespace System.Text.Formatting {
         public unsafe void Append (char* str, int count) {
             for (int i = 0; i < count; i++)
                 buffer[currentCount++] = *str++;
-        }
-
-        internal void AppendGeneric<T>(IntPtr ptr) {
-            // ptr here is a pointer to the parameter we want to format; for
-            // simple value types we can cast the pointer directly, but for
-            // strings and unknown generic value types we need to pull them
-            // out via a typed reference
-
-            // this looks gross, but T is known at JIT-time so this call tree
-            // gets compiled down to a direct call with no branching
-            if (typeof(T) == typeof(sbyte))
-                Append(*(sbyte*)ptr);
-            else if (typeof(T) == typeof(byte))
-                Append(*(byte*)ptr);
-            else if (typeof(T) == typeof(short))
-                Append(*(short*)ptr);
-            else if (typeof(T) == typeof(ushort))
-                Append(*(ushort*)ptr);
-            else if (typeof(T) == typeof(int))
-                Append(*(int*)ptr);
-            else if (typeof(T) == typeof(uint))
-                Append(*(uint*)ptr);
-            else if (typeof(T) == typeof(long))
-                Append(*(long*)ptr);
-            else if (typeof(T) == typeof(ulong))
-                Append(*(ulong*)ptr);
-            else if (typeof(T) == typeof(float))
-                Append(*(float*)ptr);
-            else if (typeof(T) == typeof(double))
-                Append(*(double*)ptr);
-            else if (typeof(T) == typeof(decimal))
-                Append(*(decimal*)ptr);
-            else if (typeof(T) == typeof(bool))
-                Append(*(bool*)ptr);
-            else if (typeof(T) == typeof(char))
-                Append(*(char*)ptr);
-            else if (typeof(T) == typeof(string)) {
-                var placeholder = default(T);
-                var tr = __makeref(placeholder);
-                *(IntPtr*)&tr = ptr;
-                Append(__refvalue(tr, string));
-            }
-            else {
-                // otherwise, we have an unknown type; extract it from the pointer
-                var placeholder = default(T);
-                var tr = __makeref(placeholder);
-                *(IntPtr*)&tr = ptr;
-                var value = __refvalue(tr, T);
-
-                // first, check to see if it's a value type implementing IStringFormattable
-                var forward = ValueHelper<T>.Forward;
-                if (forward != null)
-                    forward(this, value);
-                else {
-                    // Only two cases left; reference type implementing IStringFormattable,
-                    // or some unknown type that doesn't implement the interface at all.
-                    // We could handle the latter case by calling ToString() on it and paying the
-                    // allocation, but presumably if the user is using us instead of the built-in
-                    // formatting utilities they would rather be notified of this case, so
-                    // we'll let the cast throw.
-                    ((IStringFormattable)value).Format(this);
-                }
-            }
         }
 
         public override string ToString () {
@@ -160,8 +101,7 @@ namespace System.Text.Formatting {
                     else
                         ThrowError();
                 }
-
-                if (c == '{') {
+                else if (c == '{') {
                     // check for escape character for {{
                     if (curr == end)
                         ThrowError();
@@ -202,21 +142,127 @@ namespace System.Text.Formatting {
             }
 
             // check for format specifier
+            var specifier = new StringView();
+            if (c == ':') {
+                specifierBuffer.Clear();
+                curr++;
+                while (true) {
+                    if (curr == end)
+                        ThrowError();
+
+                    c = *curr++;
+                    if (c == '{') {
+                        // check for escape character for {{
+                        if (curr < end && *curr == '{')
+                            curr++;
+                        else
+                            ThrowError();
+                    }
+                    else if (c == '}') {
+                        // check for escape character for }}
+                        if (curr < end && *curr == '}')
+                            curr++;
+                        else {
+                            curr--;
+                            break;
+                        }
+                    }
+
+                    specifierBuffer.Add(c);
+                }
+
+                specifier.Data = string.Concat(specifierBuffer);
+            }
 
             if (c != '}')
                 ThrowError();
             curr++;
             currRef = curr;
 
-            var currentCount = this.currentCount;
-            args.Format(this, index);
+            var oldCount = currentCount;
+            args.Format(this, index, specifier);
 
             // finish off padding, if necessary
-            var padding = width - (this.currentCount - currentCount);
+            var padding = width - (currentCount - oldCount);
             if (padding > 0) {
+                if (leftJustify)
+                    Append(' ', padding);
+                else {
+                    // copy the recently placed chars up in memory to make room for padding
+                    for (int i = currentCount - 1; i >= oldCount; i--)
+                        buffer[i + padding] = buffer[i];
+
+                    // fill in padding
+                    for (int i = 0; i < padding; i++)
+                        buffer[i + oldCount] = ' ';
+                    currentCount += padding;
+                }
             }
 
             return true;
+        }
+
+        internal void AppendGeneric<T>(IntPtr ptr, StringView format) {
+            // ptr here is a pointer to the parameter we want to format; for
+            // simple value types we can cast the pointer directly, but for
+            // strings and unknown generic value types we need to pull them
+            // out via a typed reference
+
+            // this looks gross, but T is known at JIT-time so this call tree
+            // gets compiled down to a direct call with no branching
+            if (typeof(T) == typeof(sbyte))
+                Append(*(sbyte*)ptr, format);
+            else if (typeof(T) == typeof(byte))
+                Append(*(byte*)ptr, format);
+            else if (typeof(T) == typeof(short))
+                Append(*(short*)ptr, format);
+            else if (typeof(T) == typeof(ushort))
+                Append(*(ushort*)ptr, format);
+            else if (typeof(T) == typeof(int))
+                Append(*(int*)ptr, format);
+            else if (typeof(T) == typeof(uint))
+                Append(*(uint*)ptr, format);
+            else if (typeof(T) == typeof(long))
+                Append(*(long*)ptr, format);
+            else if (typeof(T) == typeof(ulong))
+                Append(*(ulong*)ptr, format);
+            else if (typeof(T) == typeof(float))
+                Append(*(float*)ptr, format);
+            else if (typeof(T) == typeof(double))
+                Append(*(double*)ptr, format);
+            else if (typeof(T) == typeof(decimal))
+                Append(*(decimal*)ptr, format);
+            else if (typeof(T) == typeof(bool))
+                Append(*(bool*)ptr, format);
+            else if (typeof(T) == typeof(char))
+                Append(*(char*)ptr, format);
+            else if (typeof(T) == typeof(string)) {
+                var placeholder = default(T);
+                var tr = __makeref(placeholder);
+                *(IntPtr*)&tr = ptr;
+                Append(__refvalue(tr, string), format);
+            }
+            else {
+                // otherwise, we have an unknown type; extract it from the pointer
+                var placeholder = default(T);
+                var tr = __makeref(placeholder);
+                *(IntPtr*)&tr = ptr;
+                var value = __refvalue(tr, T);
+
+                // first, check to see if it's a value type implementing IStringFormattable
+                var forward = ValueHelper<T>.Forward;
+                if (forward != null)
+                    forward(this, value, format);
+                else {
+                    // Only two cases left; reference type implementing IStringFormattable,
+                    // or some unknown type that doesn't implement the interface at all.
+                    // We could handle the latter case by calling ToString() on it and paying the
+                    // allocation, but presumably if the user is using us instead of the built-in
+                    // formatting utilities they would rather be notified of this case, so
+                    // we'll let the cast throw.
+                    ((IStringFormattable)value).Format(this, format);
+                }
+            }
         }
 
         static int ParseNum (ref char* currRef, char* end, int maxValue) {
@@ -263,9 +309,9 @@ namespace System.Text.Formatting {
     // Instead we pay a one-time startup cost to create a delegate that will forward
     // the parameter to the appropriate method in a strongly typed fashion.
     static class ValueHelper<T> {
-        public static readonly Action<StringFormatter, T> Forward = Prepare();
+        public static readonly Action<StringFormatter, T, StringView> Forward = Prepare();
 
-        static Action<StringFormatter, T> Prepare () {
+        static Action<StringFormatter, T, StringView> Prepare () {
             // we only use this class for value types that also implement IStringFormattable
             var type = typeof(T);
             if (!type.IsValueType || !typeof(IStringFormattable).IsAssignableFrom(type))
@@ -275,20 +321,20 @@ namespace System.Text.Formatting {
                 .GetMethod("Assign", BindingFlags.NonPublic | BindingFlags.Static)
                 .MakeGenericMethod(type)
                 .Invoke(null, null);
-            return (Action<StringFormatter, T>)result;
+            return (Action<StringFormatter, T, StringView>)result;
         }
 
-        static Action<StringFormatter, U> Assign<U>() where U : IStringFormattable {
-            return (f, t) => t.Format(f);
+        static Action<StringFormatter, U, StringView> Assign<U>() where U : IStringFormattable {
+            return (f, u, v) => u.Format(f, v);
         }
     }
 
     public interface IArgSet {
         int Count { get; }
-        void Format (StringFormatter formatter, int index);
+        void Format (StringFormatter formatter, int index, StringView format);
     }
 
     public interface IStringFormattable {
-        void Format (StringFormatter formatter);
+        void Format (StringFormatter formatter, StringView format);
     }
 }

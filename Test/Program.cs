@@ -8,20 +8,22 @@ using System.Threading.Tasks;
 
 namespace Test {
     struct Blah : IStringFormattable {
-        public void Format (StringFormatter formatter) {
-            formatter.Append("BLAH!");
+        public void Format (StringFormatter formatter, StringView format) {
+            formatter.Append("BLAH!", format);
         }
     }
 
     class Program {
+        static readonly string formatTest = "Foo {0,13:x} and bar!! {1,-15:P}bah";
+
         static void Main (string[] args) {
             var formatter = new StringFormatter();
             Blah b;
-            formatter.AppendFormat("Foo {0,3} and bar!! {1,-5}bah", -3000, b);
+            formatter.AppendFormat(formatTest, -3000, 9);
 
             Console.WriteLine(formatter.ToString());
 
-            Console.WriteLine("Foo {0,3:p} and bar!! {1,-5}bah", -3000, b);
+            Console.WriteLine(formatTest, -3000, 9);
             Console.ReadLine();
         }
     }

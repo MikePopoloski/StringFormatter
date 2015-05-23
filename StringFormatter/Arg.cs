@@ -18,9 +18,9 @@ namespace System.Text.Formatting {
             this.t0 = *(IntPtr*)&t0;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
             }
         }
     }
@@ -36,10 +36,10 @@ namespace System.Text.Formatting {
             this.t1 = *(IntPtr*)&t1;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
             }
         }
     }
@@ -57,11 +57,11 @@ namespace System.Text.Formatting {
             this.t2 = *(IntPtr*)&t2;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
-                case 2: formatter.AppendGeneric<T2>(t2); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
+                case 2: formatter.AppendGeneric<T2>(t2, format); break;
             }
         }
     }
@@ -81,12 +81,12 @@ namespace System.Text.Formatting {
             this.t3 = *(IntPtr*)&t3;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
-                case 2: formatter.AppendGeneric<T2>(t2); break;
-                case 3: formatter.AppendGeneric<T3>(t3); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
+                case 2: formatter.AppendGeneric<T2>(t2, format); break;
+                case 3: formatter.AppendGeneric<T3>(t3, format); break;
             }
         }
     }
@@ -108,13 +108,13 @@ namespace System.Text.Formatting {
             this.t4 = *(IntPtr*)&t4;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
-                case 2: formatter.AppendGeneric<T2>(t2); break;
-                case 3: formatter.AppendGeneric<T3>(t3); break;
-                case 4: formatter.AppendGeneric<T4>(t4); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
+                case 2: formatter.AppendGeneric<T2>(t2, format); break;
+                case 3: formatter.AppendGeneric<T3>(t3, format); break;
+                case 4: formatter.AppendGeneric<T4>(t4, format); break;
             }
         }
     }
@@ -138,14 +138,14 @@ namespace System.Text.Formatting {
             this.t5 = *(IntPtr*)&t5;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
-                case 2: formatter.AppendGeneric<T2>(t2); break;
-                case 3: formatter.AppendGeneric<T3>(t3); break;
-                case 4: formatter.AppendGeneric<T4>(t4); break;
-                case 5: formatter.AppendGeneric<T5>(t5); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
+                case 2: formatter.AppendGeneric<T2>(t2, format); break;
+                case 3: formatter.AppendGeneric<T3>(t3, format); break;
+                case 4: formatter.AppendGeneric<T4>(t4, format); break;
+                case 5: formatter.AppendGeneric<T5>(t5, format); break;
             }
         }
     }
@@ -171,15 +171,15 @@ namespace System.Text.Formatting {
             this.t6 = *(IntPtr*)&t6;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
-                case 2: formatter.AppendGeneric<T2>(t2); break;
-                case 3: formatter.AppendGeneric<T3>(t3); break;
-                case 4: formatter.AppendGeneric<T4>(t4); break;
-                case 5: formatter.AppendGeneric<T5>(t5); break;
-                case 6: formatter.AppendGeneric<T6>(t6); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
+                case 2: formatter.AppendGeneric<T2>(t2, format); break;
+                case 3: formatter.AppendGeneric<T3>(t3, format); break;
+                case 4: formatter.AppendGeneric<T4>(t4, format); break;
+                case 5: formatter.AppendGeneric<T5>(t5, format); break;
+                case 6: formatter.AppendGeneric<T6>(t6, format); break;
             }
         }
     }
@@ -207,16 +207,16 @@ namespace System.Text.Formatting {
             this.t7 = *(IntPtr*)&t7;
         }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-                case 0: formatter.AppendGeneric<T0>(t0); break;
-                case 1: formatter.AppendGeneric<T1>(t1); break;
-                case 2: formatter.AppendGeneric<T2>(t2); break;
-                case 3: formatter.AppendGeneric<T3>(t3); break;
-                case 4: formatter.AppendGeneric<T4>(t4); break;
-                case 5: formatter.AppendGeneric<T5>(t5); break;
-                case 6: formatter.AppendGeneric<T6>(t6); break;
-                case 7: formatter.AppendGeneric<T7>(t7); break;
+                case 0: formatter.AppendGeneric<T0>(t0, format); break;
+                case 1: formatter.AppendGeneric<T1>(t1, format); break;
+                case 2: formatter.AppendGeneric<T2>(t2, format); break;
+                case 3: formatter.AppendGeneric<T3>(t3, format); break;
+                case 4: formatter.AppendGeneric<T4>(t4, format); break;
+                case 5: formatter.AppendGeneric<T5>(t5, format); break;
+                case 6: formatter.AppendGeneric<T6>(t6, format); break;
+                case 7: formatter.AppendGeneric<T7>(t7, format); break;
             }
         }
     }

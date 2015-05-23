@@ -30,9 +30,9 @@ namespace System.Text.Formatting {
     <#}#>
     }
 
-        public void Format (StringFormatter formatter, int index) {
+        public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
-<#for(int j = 0; j < i; j++) { #>                case <#=j#>: formatter.AppendGeneric<T<#=j#>>(t<#=j#>); break;
+<#for(int j = 0; j < i; j++) { #>                case <#=j#>: formatter.AppendGeneric<T<#=j#>>(t<#=j#>, format); break;
 <#}#>
             }
         }

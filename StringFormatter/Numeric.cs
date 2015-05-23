@@ -9,9 +9,10 @@ namespace System.Text.Formatting {
     // Most of the implementation of this file was ported from the native versions built into the CLR
     // See: https://github.com/dotnet/coreclr/blob/838807429a0828a839958e3b7d392d65886c8f2e/src/classlibnative/bcltype/number.cpp
     // Also see: https://github.com/dotnet/coreclr/blob/02084af832c2900cf6eac2a168c41f261409be97/src/mscorlib/src/System/Number.cs
+    // Standard numeric format string reference: https://msdn.microsoft.com/en-us/library/dwhawy9k%28v=vs.110%29.aspx
 
     unsafe static class Numeric {
-        public static void FormatInt32 (StringFormatter formatter, int value, string specifier, CachedCulture culture) {
+        public static void FormatInt32 (StringFormatter formatter, int value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
             switch (fmt) {
@@ -26,6 +27,7 @@ namespace System.Text.Formatting {
                     break;
 
                 case 'X':
+                    Int32ToHexStr(formatter, (uint)value, fmt - ('X' - 'A' + 10), digits);
                     break;
 
                 default:
@@ -143,6 +145,9 @@ namespace System.Text.Formatting {
                         formatter.Append(buffer, (int)(ptr - buffer));
                         break;
                     }
+
+                default:
+                    throw new FormatException();
             }
         }
 
@@ -334,6 +339,15 @@ namespace System.Text.Formatting {
             formatter.Append(p, (int)(buffer + bufferLength - p));
         }
 
+        static void Int32ToHexStr (StringFormatter formatter, uint value, int hexBase, int digits) {
+            var buffer = stackalloc char[100];
+            if (digits < 1)
+                digits = 1;
+
+            var p = Int32ToHexChars(buffer + 100, value, hexBase, digits);
+            formatter.Append(p, (int)(buffer + 100 - p));
+        }
+
         static char* Int32ToDecChars (char* p, uint value, int digits) {
             while (--digits >= 0 || value != 0) {
                 *--p = (char)(value % 10 + '0');
@@ -342,15 +356,22 @@ namespace System.Text.Formatting {
             return p;
         }
 
-        // looks for standard numeric format strings: single letter followed by the number of digits
-        // see: https://msdn.microsoft.com/en-us/library/dwhawy9k%28v=vs.110%29.aspx
-        static char ParseFormatSpecifier (string specifier, out int digits) {
-            if (string.IsNullOrEmpty(specifier)) {
+        static char* Int32ToHexChars (char* p, uint value, int hexBase, int digits) {
+            while (--digits >= 0 || value != 0) {
+                var digit = value & 0xF;
+                *--p = (char)(digit + (digit < 10 ? '0' : hexBase));
+                value >>= 4;
+            }
+            return p;
+        }
+
+        static char ParseFormatSpecifier (StringView specifier, out int digits) {
+            if (specifier.IsEmpty) {
                 digits = -1;
                 return 'G';
             }
 
-            fixed (char* ptr = specifier)
+            fixed (char* ptr = specifier.Data)
             {
                 char* curr = ptr;
                 char first = *curr++;
