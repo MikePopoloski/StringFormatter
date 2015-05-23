@@ -14,13 +14,15 @@ namespace Test {
     }
 
     class Program {
-
         static void Main (string[] args) {
             var formatter = new StringFormatter();
             Blah b;
-            formatter.AppendFormat("Foo {0,3} and bar!! {1,-5}bah", 3, b);
+            formatter.AppendFormat("Foo {0,3} and bar!! {1,-5}bah", -3000, b);
 
             Console.WriteLine(formatter.ToString());
+
+            Console.WriteLine("Foo {0,3:p} and bar!! {1,-5}bah", -3000, b);
+            Console.ReadLine();
         }
     }
 }

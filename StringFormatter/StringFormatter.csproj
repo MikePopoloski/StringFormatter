@@ -41,6 +41,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Arg.tt</DependentUpon>
     </Compile>
+    <Compile Include="Culture.cs" />
     <Compile Include="Numeric.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringFormatter.cs" />

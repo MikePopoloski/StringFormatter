@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace System.Text.Formatting {
     public unsafe class StringFormatter {
+        CachedCulture culture;
         char[] buffer;
         int currentCount;
 
@@ -14,6 +15,7 @@ namespace System.Text.Formatting {
 
         public StringFormatter (int capacity) {
             buffer = new char[capacity];
+            culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
         }
 
         public void Append (char c) {
@@ -26,7 +28,7 @@ namespace System.Text.Formatting {
         }
 
         public void Append (int value) {
-            Numeric.FormatInt32(this, value, "G", CultureInfo.CurrentCulture.NumberFormat);
+            Numeric.FormatInt32(this, value, "P", culture);
         }
 
         public void Append (uint value) {
