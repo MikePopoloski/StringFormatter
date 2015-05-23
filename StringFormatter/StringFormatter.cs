@@ -86,7 +86,7 @@ namespace System.Text.Formatting {
                 buffer[currentCount++] = c;
         }
 
-        public unsafe void Append (char* str, int count) {
+        public void Append (char* str, int count) {
             for (int i = 0; i < count; i++)
                 buffer[currentCount++] = *str++;
         }

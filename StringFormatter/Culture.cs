@@ -23,6 +23,8 @@ namespace System.Text.Formatting {
         public readonly string NegativeSign;
         public readonly string PositiveSign;
 
+        public readonly int DecimalBufferSize;
+
         public CachedCulture (NumberFormatInfo info) {
             CurrencyData = new NumberFormatData(
                 info.CurrencyDecimalDigits,
@@ -79,6 +81,11 @@ namespace System.Text.Formatting {
             PercentSymbol = info.PercentSymbol;
             NegativeSign = info.NegativeSign;
             PositiveSign = info.PositiveSign;
+
+            DecimalBufferSize =
+                NumberFormatData.MinBufferSize +
+                info.NumberDecimalSeparator.Length +
+                (NegativeSign.Length + PositiveSign.Length) * 2;
         }
 
         static readonly string[] PositiveCurrencyFormats = {
@@ -152,6 +159,6 @@ namespace System.Text.Formatting {
             return checked((int)len);
         }
 
-        const int MinBufferSize = 105;
+        internal const int MinBufferSize = 105;
     }
 }

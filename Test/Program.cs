@@ -14,16 +14,17 @@ namespace Test {
     }
 
     class Program {
-        static readonly string formatTest = "Foo {0,13:e} and bar!! {1,-15:P}bah";
+        static readonly string formatTest = "Foo {0,13:g4} and bar!! {1,-15:P}bah";
 
         static void Main (string[] args) {
             var formatter = new StringFormatter();
-            Blah b;
-            formatter.AppendFormat(formatTest, -3000, 9);
+            var v1 = -31230000000000;
+            var v2 = 9;
 
+            formatter.AppendFormat(formatTest, v1, v2);
             Console.WriteLine(formatter.ToString());
 
-            Console.WriteLine(formatTest, -3000, 9);
+            Console.WriteLine(formatTest, v1, v2);
             Console.ReadLine();
         }
     }

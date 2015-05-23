@@ -280,6 +280,49 @@ namespace System.Text.Formatting {
                         break;
                     }
 
+                case 'G':
+                    {
+                        var enableRounding = true;
+                        if (maxDigits < 1) {
+                            if (isDecimal && maxDigits == -1) {
+                                // if we're formatting a decimal, default to 29 digits precision
+                                // only for G formatting without a precision specifier
+                                maxDigits = DecimalPrecision;
+                                enableRounding = false;
+                            }
+                            else
+                                maxDigits = number.Precision;
+                        }
+
+                        var bufferSize = maxDigits + culture.DecimalBufferSize;
+                        var buffer = stackalloc char[bufferSize];
+                        var ptr = buffer;
+
+                        // round for G formatting only if a precision is given
+                        // we need to handle the minus zero case also
+                        if (enableRounding)
+                            RoundNumber(ref number, maxDigits);
+                        else if (isDecimal && number.Digits[0] == 0)
+                            number.Sign = 0;
+
+                        if (number.Sign > 0)
+                            AppendString(&ptr, culture.NegativeSign);
+
+                        ptr = FormatGeneral(
+                            ptr,
+                            ref number,
+                            maxDigits,
+                            (char)(format - ('G' - 'E')),
+                            culture.NumberData.DecimalSeparator,
+                            culture.PositiveSign,
+                            culture.NegativeSign,
+                            !enableRounding
+                        );
+
+                        formatter.Append(buffer, (int)(ptr - buffer));
+                        break;
+                    }
+
                 default:
                     throw new FormatException();
             }
@@ -322,6 +365,46 @@ namespace System.Text.Formatting {
                     default: *buffer++ = c; break;
                 }
             }
+
+            return buffer;
+        }
+
+        static char* FormatGeneral (
+            char* buffer, ref Number number, int maxDigits, char expChar,
+            string decimalSeparator, string positiveSign, string negativeSign,
+            bool suppressScientific) {
+
+            var digitPos = number.Scale;
+            var scientific = false;
+            if (!suppressScientific) {
+                if (digitPos > maxDigits || digitPos < -3) {
+                    digitPos = 1;
+                    scientific = true;
+                }
+            }
+
+            var digits = number.Digits;
+            if (digitPos <= 0)
+                *buffer++ = '0';
+            else {
+                do {
+                    *buffer++ = *digits != 0 ? *digits++ : '0';
+                } while (--digitPos > 0);
+            }
+
+            if (*digits != 0 || digitPos < 0) {
+                AppendString(&buffer, decimalSeparator);
+                while (digitPos < 0) {
+                    *buffer++ = '0';
+                    digitPos++;
+                }
+
+                while (*digits != 0)
+                    *buffer++ = *digits++;
+            }
+
+            if (scientific)
+                buffer = FormatExponent(buffer, number.Scale - 1, expChar, positiveSign, negativeSign, 2);
 
             return buffer;
         }
@@ -495,7 +578,7 @@ namespace System.Text.Formatting {
             if (digits < 1)
                 digits = 1;
 
-            var sign = High32((ulong)value);
+            var sign = (int)High32((ulong)value);
             var maxDigits = digits > 20 ? digits : 20;
             var bufferLength = maxDigits > 100 ? maxDigits : 100;
 
@@ -551,7 +634,7 @@ namespace System.Text.Formatting {
                     digits = 1;
                 ptr = Int32ToHexChars(buffer + 100, Low32(value), hexBase, digits);
             }
-            
+
             formatter.Append(ptr, (int)(buffer + 100 - ptr));
         }
 
@@ -757,5 +840,8 @@ namespace System.Text.Formatting {
         const int UInt32Precision = 10;
         const int Int64Precision = 19;
         const int UInt64Precision = 20;
+        const int FloatPrecision = 7;
+        const int DoublePrecision = 15;
+        const int DecimalPrecision = 29;
     }
 }
