@@ -7,7 +7,7 @@ using System.Text.Formatting;
 using System.Threading.Tasks;
 
 namespace Test {
-    struct Blah : IStringifiable {
+    struct Blah : IStringFormattable {
         public void Format (StringFormatter formatter) {
             formatter.Append("BLAH!");
         }
@@ -18,7 +18,7 @@ namespace Test {
         static void Main (string[] args) {
             var formatter = new StringFormatter();
             Blah b;
-            formatter.Append("Foo {0,3} and bar!! {1,-5}bah", 3, b);
+            formatter.AppendFormat("Foo {0,3} and bar!! {1,-5}bah", 3, b);
 
             Console.WriteLine(formatter.ToString());
         }

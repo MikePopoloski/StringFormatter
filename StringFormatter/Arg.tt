@@ -1,5 +1,14 @@
 ﻿<#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ output extension=".cs" #>
+// This file is auto-generated from the Arg.tt T4 template.
+
+// The types here are used to forward arguments through to the string
+// formatter routine without introducing any copying of the argument
+// (if it's a value type) and preserving its statically known type via
+// the generic type parameters.
+
+// The switch statement in each Format() method looks ugly but gets
+// translated by the compiler into a nice direct jump table.
 
 namespace System.Text.Formatting {
 <# for(int i = 1; i <= 8; i++) {
@@ -10,33 +19,23 @@ namespace System.Text.Formatting {
     }
     fullName += ">";
 #>
-    struct <#=fullName#> : IArgSet {
-<#for(int j = 0; j < i; j++) { #>        T<#=j#> t<#=j#>;
+    unsafe struct <#=fullName#> : IArgSet {
+<#for(int j = 0; j < i; j++) { #>        IntPtr t<#=j#>;
 <#}#>
 
         public int Count => <#=i#>;
 
-        public <#=simpleName#> (T0 t0<#for(int j = 1; j < i; j++) { #>, T<#=j#> t<#=j#><#}#>) {
-    <#for(int j = 0; j < i; j++) { #>        this.t<#=j#> = t<#=j#>;
+        public <#=simpleName#> (TypedReference t0<#for(int j = 1; j < i; j++) { #>, TypedReference t<#=j#><#}#>) {
+    <#for(int j = 0; j < i; j++) { #>        this.t<#=j#> = *(IntPtr*)&t<#=j#>;
     <#}#>
     }
 
         public void Format (StringFormatter formatter, int index) {
-            Accessors[index](formatter, ref this);
-        }
-
-<#for(int j = 0; j < i; j++) {
-#>        static void Format<#=j#> (StringFormatter formatter, ref <#=fullName#> arg) {
-            formatter.AppendGeneric(arg.t<#=j#>);
-        }
-
+            switch (index) {
+<#for(int j = 0; j < i; j++) { #>                case <#=j#>: formatter.AppendGeneric<T<#=j#>>(t<#=j#>); break;
 <#}#>
-        delegate void Accessor (StringFormatter formatter, ref <#=fullName#> arg);
-        static readonly Accessor[] Accessors = {
-            Format0<#for(int j = 1; j < i; j++) { #>,
-            Format<#=j#><#}#>
-
-        };
+            }
+        }
     }
 
 <#
