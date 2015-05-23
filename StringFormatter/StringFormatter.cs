@@ -5,7 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 namespace System.Text.Formatting {
-    public unsafe class StringFormatter {
+    public unsafe partial class StringFormatter {
         CachedCulture culture;
         char[] buffer;
         int currentCount;
@@ -69,17 +69,7 @@ namespace System.Text.Formatting {
         public override string ToString () {
             return string.Concat(buffer);
         }
-
-        public void AppendFormat<T0>(string format, T0 arg0) {
-            var args = new Arg1<T0>(__makeref(arg0));
-            AppendArgSet(format, ref args);
-        }
-
-        public void AppendFormat<T0, T1>(string format, T0 arg0, T1 arg1) {
-            var args = new Arg2<T0, T1>(__makeref(arg0), __makeref(arg1));
-            AppendArgSet(format, ref args);
-        }
-
+        
         public void AppendArgSet<T>(string format, ref T args) where T : IArgSet {
             fixed (char* formatPtr = format)
             {
@@ -299,7 +289,7 @@ namespace System.Text.Formatting {
             throw new FormatException();
         }
 
-        const int MaxArgs = 64;
+        const int MaxArgs = 256;
         const int MaxSpacing = 1000000;
     }
 

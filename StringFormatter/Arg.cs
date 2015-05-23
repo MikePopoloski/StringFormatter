@@ -9,6 +9,48 @@
 // translated by the compiler into a nice direct jump table.
 
 namespace System.Text.Formatting {
+    partial class StringFormatter {
+        public void AppendFormat<T0>(string format, T0 arg0) {
+            var args = new Arg1<T0>(__makeref(arg0));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1>(string format, T0 arg0, T1 arg1) {
+            var args = new Arg2<T0, T1>(__makeref(arg0), __makeref(arg1));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1, T2>(string format, T0 arg0, T1 arg1, T2 arg2) {
+            var args = new Arg3<T0, T1, T2>(__makeref(arg0), __makeref(arg1), __makeref(arg2));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1, T2, T3>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3) {
+            var args = new Arg4<T0, T1, T2, T3>(__makeref(arg0), __makeref(arg1), __makeref(arg2), __makeref(arg3));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1, T2, T3, T4>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+            var args = new Arg5<T0, T1, T2, T3, T4>(__makeref(arg0), __makeref(arg1), __makeref(arg2), __makeref(arg3), __makeref(arg4));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1, T2, T3, T4, T5>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
+            var args = new Arg6<T0, T1, T2, T3, T4, T5>(__makeref(arg0), __makeref(arg1), __makeref(arg2), __makeref(arg3), __makeref(arg4), __makeref(arg5));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1, T2, T3, T4, T5, T6>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) {
+            var args = new Arg7<T0, T1, T2, T3, T4, T5, T6>(__makeref(arg0), __makeref(arg1), __makeref(arg2), __makeref(arg3), __makeref(arg4), __makeref(arg5), __makeref(arg6));
+            AppendArgSet(format, ref args);
+        }
+
+        public void AppendFormat<T0, T1, T2, T3, T4, T5, T6, T7>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) {
+            var args = new Arg8<T0, T1, T2, T3, T4, T5, T6, T7>(__makeref(arg0), __makeref(arg1), __makeref(arg2), __makeref(arg3), __makeref(arg4), __makeref(arg5), __makeref(arg6), __makeref(arg7));
+            AppendArgSet(format, ref args);
+        }
+    }
+
     unsafe struct Arg1<T0> : IArgSet {
         IntPtr t0;
 
@@ -220,5 +262,4 @@ namespace System.Text.Formatting {
             }
         }
     }
-
 }
