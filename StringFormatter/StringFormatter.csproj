@@ -7,7 +7,7 @@
     <ProjectGuid>{8A0EF787-605F-44BA-AE5C-D616451F8724}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>StringFormatter</RootNamespace>
+    <RootNamespace>System.Text.Formatting</RootNamespace>
     <AssemblyName>StringFormatter</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -41,6 +41,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Arg.tt</DependentUpon>
     </Compile>
+    <Compile Include="Numeric.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringFormatter.cs" />
   </ItemGroup>

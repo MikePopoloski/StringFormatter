@@ -27,7 +27,7 @@ namespace System.Text.Formatting {
 
 <#for(int j = 0; j < i; j++) {
 #>        static void Format<#=j#> (StringFormatter formatter, ref <#=fullName#> arg) {
-            formatter.Append(arg.t<#=j#>);
+            formatter.AppendGeneric(arg.t<#=j#>);
         }
 
 <#}#>

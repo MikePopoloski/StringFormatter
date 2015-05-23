@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Globalization;
+using System.Reflection;
+using System.Linq;
 
 namespace System.Text.Formatting {
     public class StringFormatter {
         char[] buffer;
-        int count;
+        int currentCount;
 
         public StringFormatter ()
             : this(128) {
@@ -14,7 +17,7 @@ namespace System.Text.Formatting {
         }
 
         public void Append (char c) {
-            buffer[count++] = c;
+            buffer[currentCount++] = c;
         }
 
         public void Append (char c, int count) {
@@ -23,23 +26,33 @@ namespace System.Text.Formatting {
         }
 
         public void Append (int i) {
-            Append(i.ToString());
+            Numeric.FormatInt32(this, i, "G", CultureInfo.CurrentCulture.NumberFormat);
         }
 
         public void Append (string str) {
             foreach (var c in str)
-                buffer[count++] = c;
+                buffer[currentCount++] = c;
         }
 
-        public void Append<T>(T value) {
+        public unsafe void Append (char* str, int count) {
+            for (int i = 0; i < count; i++)
+                buffer[currentCount++] = *str++;
+        }
+
+        internal void AppendGeneric<T>(T value) {
             // this looks gross, but T is known at JIT-time so this call tree
-            // is hopefully going to get optimized down to a direct call
+            // gets compiled down to a direct call to the appropriate specialized method
+            // we need to use typed references here to convince the compiler that yes,
+            // we really do have the value we say we do
             if (typeof(T) == typeof(int))
-                Append(value as int? ?? 0);
+                Append(__refvalue(__makeref(value), int));
             else if (typeof(T) == typeof(string))
-                Append(value as string);
+                Append(__refvalue(__makeref(value), string));
             else if (typeof(T) == typeof(char))
-                Append(value as char? ?? 0);
+                Append(__refvalue(__makeref(value), char));
+            else if (ValueHelper<T>.Thingy != null) {
+                ValueHelper<T>.Thingy(this, value);
+            }
             else
                 throw new InvalidOperationException();
         }
@@ -53,20 +66,17 @@ namespace System.Text.Formatting {
             AppendSet(format, ref args);
         }
 
-        public void Append<T0, T1>(string format, T0 arg0, T1 arg1) {
+        public unsafe void Append<T0, T1>(string format, T0 arg0, T1 arg1) {
             var args = new Arg2<T0, T1>(arg0, arg1);
             AppendSet(format, ref args);
         }
 
-        public void AppendSet<T>(string format, ref T args) where T : IArgSet {
-            unsafe
+        public unsafe void AppendSet<T>(string format, ref T args) where T : IArgSet {
+            fixed (char* formatPtr = format)
             {
-                fixed (char* formatPtr = format)
-                {
-                    var curr = formatPtr;
-                    var end = curr + format.Length;
-                    while (AppendSegment(ref curr, end, ref args)) ;
-                }
+                var curr = formatPtr;
+                var end = curr + format.Length;
+                while (AppendSegment(ref curr, end, ref args)) ;
             }
         }
 
@@ -130,11 +140,11 @@ namespace System.Text.Formatting {
             curr++;
             currRef = curr;
 
-            var currentCount = count;
+            var currentCount = this.currentCount;
             args.Format(this, index);
 
             // finish off padding, if necessary
-            var padding = width - (count - currentCount);
+            var padding = width - (this.currentCount - currentCount);
             if (padding > 0) {
             }
 
@@ -179,13 +189,56 @@ namespace System.Text.Formatting {
         const int MaxSpacing = 1000000;
     }
 
+    static class ValueHelper<T> {
+        static readonly MethodInfo Assigner = typeof(ValueHelper<T>).GetMethod("Assign", BindingFlags.NonPublic | BindingFlags.Static);
+
+        public static readonly Action<StringFormatter, T> Thingy = Prepare();
+
+        static Action<StringFormatter, T> Prepare () {
+            var type = typeof(T);
+            if (!type.IsValueType || !typeof(IStringifiable).IsAssignableFrom(type))
+                return null;
+
+            var a = Assigner;
+            return (Action<StringFormatter, T>)a.MakeGenericMethod(type).Invoke(null, null);
+        }
+
+        static Action<StringFormatter, U> Assign<U>() where U : IStringifiable {
+            return (f, t) => t.Format(f);
+        }
+
+
+    }
+
+    //unsafe struct Arg2cc<T0, T1> : IArgSet {
+    //    IntPtr t0;
+    //    IntPtr t1;
+
+    //    public int Count => 2;
+
+    //    public Arg2cc (TypedReference t0, TypedReference t1) {
+    //        this.t0 = *(IntPtr*)&t0;
+    //        this.t1 = *(IntPtr*)&t1;
+    //    }
+
+    //    public void Format (StringFormatter formatter, int index) {
+
+
+    //        Accessors[index](formatter, ref this);
+    //    }
+    //}
+
+    //static class BufferPacker<T0, T1> {
+    //    public static readonly int 
+    //}
+
     public interface IArgSet {
         int Count { get; }
         void Format (StringFormatter formatter, int index);
     }
 
     // need a better name for this
-    interface IStringifiable {
+    public interface IStringifiable {
         void Format (StringFormatter formatter);
     }
 }

@@ -14,7 +14,7 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg1<T0> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg1<T0> arg);
@@ -39,11 +39,11 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg2<T0, T1> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg2<T0, T1> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg2<T0, T1> arg);
@@ -71,15 +71,15 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg3<T0, T1, T2> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg3<T0, T1, T2> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         static void Format2 (StringFormatter formatter, ref Arg3<T0, T1, T2> arg) {
-            formatter.Append(arg.t2);
+            formatter.AppendGeneric(arg.t2);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg3<T0, T1, T2> arg);
@@ -110,19 +110,19 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg4<T0, T1, T2, T3> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg4<T0, T1, T2, T3> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         static void Format2 (StringFormatter formatter, ref Arg4<T0, T1, T2, T3> arg) {
-            formatter.Append(arg.t2);
+            formatter.AppendGeneric(arg.t2);
         }
 
         static void Format3 (StringFormatter formatter, ref Arg4<T0, T1, T2, T3> arg) {
-            formatter.Append(arg.t3);
+            formatter.AppendGeneric(arg.t3);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg4<T0, T1, T2, T3> arg);
@@ -156,23 +156,23 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg5<T0, T1, T2, T3, T4> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg5<T0, T1, T2, T3, T4> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         static void Format2 (StringFormatter formatter, ref Arg5<T0, T1, T2, T3, T4> arg) {
-            formatter.Append(arg.t2);
+            formatter.AppendGeneric(arg.t2);
         }
 
         static void Format3 (StringFormatter formatter, ref Arg5<T0, T1, T2, T3, T4> arg) {
-            formatter.Append(arg.t3);
+            formatter.AppendGeneric(arg.t3);
         }
 
         static void Format4 (StringFormatter formatter, ref Arg5<T0, T1, T2, T3, T4> arg) {
-            formatter.Append(arg.t4);
+            formatter.AppendGeneric(arg.t4);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg5<T0, T1, T2, T3, T4> arg);
@@ -209,27 +209,27 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         static void Format2 (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg) {
-            formatter.Append(arg.t2);
+            formatter.AppendGeneric(arg.t2);
         }
 
         static void Format3 (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg) {
-            formatter.Append(arg.t3);
+            formatter.AppendGeneric(arg.t3);
         }
 
         static void Format4 (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg) {
-            formatter.Append(arg.t4);
+            formatter.AppendGeneric(arg.t4);
         }
 
         static void Format5 (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg) {
-            formatter.Append(arg.t5);
+            formatter.AppendGeneric(arg.t5);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg6<T0, T1, T2, T3, T4, T5> arg);
@@ -269,31 +269,31 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         static void Format2 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t2);
+            formatter.AppendGeneric(arg.t2);
         }
 
         static void Format3 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t3);
+            formatter.AppendGeneric(arg.t3);
         }
 
         static void Format4 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t4);
+            formatter.AppendGeneric(arg.t4);
         }
 
         static void Format5 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t5);
+            formatter.AppendGeneric(arg.t5);
         }
 
         static void Format6 (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg) {
-            formatter.Append(arg.t6);
+            formatter.AppendGeneric(arg.t6);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg7<T0, T1, T2, T3, T4, T5, T6> arg);
@@ -336,35 +336,35 @@ namespace System.Text.Formatting {
         }
 
         static void Format0 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t0);
+            formatter.AppendGeneric(arg.t0);
         }
 
         static void Format1 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t1);
+            formatter.AppendGeneric(arg.t1);
         }
 
         static void Format2 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t2);
+            formatter.AppendGeneric(arg.t2);
         }
 
         static void Format3 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t3);
+            formatter.AppendGeneric(arg.t3);
         }
 
         static void Format4 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t4);
+            formatter.AppendGeneric(arg.t4);
         }
 
         static void Format5 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t5);
+            formatter.AppendGeneric(arg.t5);
         }
 
         static void Format6 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t6);
+            formatter.AppendGeneric(arg.t6);
         }
 
         static void Format7 (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg) {
-            formatter.Append(arg.t7);
+            formatter.AppendGeneric(arg.t7);
         }
 
         delegate void Accessor (StringFormatter formatter, ref Arg8<T0, T1, T2, T3, T4, T5, T6, T7> arg);
