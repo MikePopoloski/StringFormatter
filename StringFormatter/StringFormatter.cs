@@ -12,7 +12,7 @@ namespace System.Text.Formatting {
         List<char> specifierBuffer;
 
         public StringFormatter ()
-            : this(128) {
+            : this(256) {
         }
 
         public StringFormatter (int capacity) {
@@ -74,6 +74,7 @@ namespace System.Text.Formatting {
         }
 
         public void Append (decimal value, StringView format) {
+            Numeric.FormatDecimal(this, value, format, culture);
         }
 
         public void Append (bool value) {

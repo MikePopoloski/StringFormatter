@@ -193,7 +193,7 @@ namespace System.Text.Formatting {
             }
 
             var number = new Number();
-            var buffer = stackalloc char[MaxNumberDigits + 1];
+            var buffer = stackalloc char[MaxFloatingDigits + 1];
             number.Digits = buffer;
             DoubleToNumber(value, precision, ref number);
 
@@ -235,7 +235,7 @@ namespace System.Text.Formatting {
             }
 
             var number = new Number();
-            var buffer = stackalloc char[MaxNumberDigits + 1];
+            var buffer = stackalloc char[MaxFloatingDigits + 1];
             number.Digits = buffer;
             DoubleToNumber(value, precision, ref number);
 
@@ -254,6 +254,20 @@ namespace System.Text.Formatting {
 
             if (fmt != 0)
                 NumberToString(formatter, ref number, fmt, digits, culture);
+            else
+                NumberToCustomFormatString(formatter, ref number, specifier, culture);
+        }
+
+        public static void FormatDecimal (StringFormatter formatter, decimal value, StringView specifier, CachedCulture culture) {
+            int digits;
+            var fmt = ParseFormatSpecifier(specifier, out digits);
+
+            var number = new Number();
+            var buffer = stackalloc char[MaxNumberDigits + 1];
+            number.Digits = buffer;
+            DecimalToNumber(value, ref number);
+            if (fmt != 0)
+                NumberToString(formatter, ref number, fmt, digits, culture, isDecimal: true);
             else
                 NumberToCustomFormatString(formatter, ref number, specifier, culture);
         }
@@ -868,18 +882,13 @@ namespace System.Text.Formatting {
             }
             else {
                 // convert the digits of the number to characters
-                if (precision < 0)
-                    precision = 0;
-                else if (precision >= MaxNumberDigits - 1)
-                    precision = MaxNumberDigits - 2;
-
                 if (value < 0) {
                     number.Sign = 1;
                     value = -value;
                 }
 
                 var digits = number.Digits;
-                var end = digits + MaxNumberDigits;
+                var end = digits + MaxFloatingDigits;
                 var p = end;
                 var shift = 0;
                 double intPart;
@@ -928,6 +937,26 @@ namespace System.Text.Formatting {
                 number.Scale = shift;
                 *digits = '\0';
             }
+        }
+
+        static void DecimalToNumber (decimal value, ref Number number) {
+            number.Precision = DecimalPrecision;
+            number.Sign = value < 0 ? 1 : 0;
+
+            var buffer = stackalloc char[DecimalPrecision + 1];
+            var p = buffer + DecimalPrecision;
+            while ((Mid32(value) | High32(value)) != 0)
+                p = Int32ToDecChars(p, DecDivMod(ref value), 9);
+
+            p = Int32ToDecChars(p, Low32(value), 0);
+
+            var len = (int)(buffer + DecimalPrecision - p);
+            number.Scale = len - DecScale(value);
+
+            var dest = number.Digits;
+            while (--len >= 0)
+                *dest++ = *p++;
+            *dest = '\0';
         }
 
         static void RoundNumber (ref Number number, int pos) {
@@ -980,8 +1009,22 @@ namespace System.Text.Formatting {
             return rem;
         }
 
+        static uint D32DivMod (uint high32, uint* low32) {
+            var n = (ulong)high32 << 32 | *low32;
+            *low32 = (uint)(n / 1000000000);
+            return (uint)(n % 1000000000);
+        }
+
+        static uint DecDivMod (ref decimal value) {
+            fixed (decimal* ptr = &value)
+            {
+                var uptr = (uint*)ptr;
+                return D32DivMod(D32DivMod(D32DivMod(0, uptr + 1), uptr + 3), uptr + 2);
+            }
+        }
+
         static double ModF (double value, out double intPart) {
-            intPart = (int)value;
+            intPart = Math.Truncate(value);
             return value - intPart;
         }
 
@@ -1009,6 +1052,22 @@ namespace System.Text.Formatting {
             return (uint)((value & 0xFFFFFFFF00000000) >> 32);
         }
 
+        static uint Low32 (decimal value) {
+            return *((uint*)&value + 2);
+        }
+
+        static uint Mid32 (decimal value) {
+            return *((uint*)&value + 3);
+        }
+
+        static uint High32 (decimal value) {
+            return *((uint*)&value + 1);
+        }
+
+        static int DecScale (decimal value) {
+            return ((*((int*)&value)) >> 16) & 0xFF;
+        }
+
         struct Number {
             public int Precision;
             public int Scale;
@@ -1022,6 +1081,7 @@ namespace System.Text.Formatting {
         }
 
         const int MaxNumberDigits = 50;
+        const int MaxFloatingDigits = 352;
         const int Int32Precision = 10;
         const int UInt32Precision = 10;
         const int Int64Precision = 19;
