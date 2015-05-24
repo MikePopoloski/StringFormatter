@@ -23,6 +23,10 @@ namespace System.Text.Formatting {
         public readonly string NegativeSign;
         public readonly string PositiveSign;
 
+        public readonly string NaN;
+        public readonly string PositiveInfinity;
+        public readonly string NegativeInfinity;
+
         public readonly int DecimalBufferSize;
 
         public CachedCulture (NumberFormatInfo info) {
@@ -81,7 +85,9 @@ namespace System.Text.Formatting {
             PercentSymbol = info.PercentSymbol;
             NegativeSign = info.NegativeSign;
             PositiveSign = info.PositiveSign;
-
+            NaN = info.NaNSymbol;
+            PositiveInfinity = info.PositiveInfinitySymbol;
+            NegativeInfinity = info.NegativeInfinitySymbol;
             DecimalBufferSize =
                 NumberFormatData.MinBufferSize +
                 info.NumberDecimalSeparator.Length +

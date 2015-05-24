@@ -174,6 +174,90 @@ namespace System.Text.Formatting {
             }
         }
 
+        public static void FormatSingle (StringFormatter formatter, float value, StringView specifier, CachedCulture culture) {
+            int digits;
+            int precision = FloatPrecision;
+            var fmt = ParseFormatSpecifier(specifier, out digits);
+
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (fmt & 0xFFDF) {
+                case 'G':
+                    if (digits > 7)
+                        precision = 9;
+                    break;
+
+                case 'E':
+                    if (digits > 6)
+                        precision = 9;
+                    break;
+            }
+
+            var number = new Number();
+            var buffer = stackalloc char[MaxNumberDigits + 1];
+            number.Digits = buffer;
+            DoubleToNumber(value, precision, ref number);
+
+            if (number.Scale == ScaleNaN) {
+                formatter.Append(culture.NaN);
+                return;
+            }
+
+            if (number.Scale == ScaleInf) {
+                if (number.Sign > 0)
+                    formatter.Append(culture.NegativeInfinity);
+                else
+                    formatter.Append(culture.PositiveInfinity);
+                return;
+            }
+
+            if (fmt != 0)
+                NumberToString(formatter, ref number, fmt, digits, culture);
+            else
+                NumberToCustomFormatString(formatter, ref number, specifier, culture);
+        }
+
+        public static void FormatDouble (StringFormatter formatter, double value, StringView specifier, CachedCulture culture) {
+            int digits;
+            int precision = DoublePrecision;
+            var fmt = ParseFormatSpecifier(specifier, out digits);
+
+            // ANDing with 0xFFDF has the effect of uppercasing the character
+            switch (fmt & 0xFFDF) {
+                case 'G':
+                    if (digits > 15)
+                        precision = 17;
+                    break;
+
+                case 'E':
+                    if (digits > 14)
+                        precision = 17;
+                    break;
+            }
+
+            var number = new Number();
+            var buffer = stackalloc char[MaxNumberDigits + 1];
+            number.Digits = buffer;
+            DoubleToNumber(value, precision, ref number);
+
+            if (number.Scale == ScaleNaN) {
+                formatter.Append(culture.NaN);
+                return;
+            }
+
+            if (number.Scale == ScaleInf) {
+                if (number.Sign > 0)
+                    formatter.Append(culture.NegativeInfinity);
+                else
+                    formatter.Append(culture.PositiveInfinity);
+                return;
+            }
+
+            if (fmt != 0)
+                NumberToString(formatter, ref number, fmt, digits, culture);
+            else
+                NumberToCustomFormatString(formatter, ref number, specifier, culture);
+        }
+
         static void NumberToString (StringFormatter formatter, ref Number number, char format, int maxDigits, CachedCulture culture, bool isDecimal = false) {
             // ANDing with 0xFFDF has the effect of uppercasing the character
             switch (format & 0xFFDF) {
@@ -238,7 +322,7 @@ namespace System.Text.Formatting {
                         var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
                         maxDigits++;
 
-                        RoundNumber(ref number, number.Scale + maxDigits);
+                        RoundNumber(ref number, maxDigits);
 
                         var buffer = stackalloc char[bufferSize];
                         var ptr = buffer;
@@ -770,6 +854,82 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
+        static void DoubleToNumber (double value, int precision, ref Number number) {
+            number.Precision = precision;
+
+            uint sign, exp, mantHi, mantLo;
+            ExplodeDouble(value, out sign, out exp, out mantHi, out mantLo);
+
+            if (exp == 0x7FF) {
+                // special value handling (infinity and NaNs)
+                number.Scale = (mantLo != 0 || mantHi != 0) ? ScaleNaN : ScaleInf;
+                number.Sign = (int)sign;
+                number.Digits[0] = '\0';
+            }
+            else {
+                // convert the digits of the number to characters
+                if (precision < 0)
+                    precision = 0;
+                else if (precision >= MaxNumberDigits - 1)
+                    precision = MaxNumberDigits - 2;
+
+                if (value < 0) {
+                    number.Sign = 1;
+                    value = -value;
+                }
+
+                var digits = number.Digits;
+                var end = digits + MaxNumberDigits;
+                var p = end;
+                var shift = 0;
+                double intPart;
+                double reducedInt;
+                var fracPart = ModF(value, out intPart);
+
+                if (intPart != 0) {
+                    // format the integer part
+                    while (intPart != 0) {
+                        reducedInt = ModF(intPart / 10, out intPart);
+                        *--p = (char)((int)((reducedInt + 0.03) * 10) + '0');
+                        shift++;
+                    }
+                    while (p < end)
+                        *digits++ = *p++;
+                }
+                else if (fracPart > 0) {
+                    // normalize the fractional part
+                    while ((reducedInt = fracPart * 10) < 1) {
+                        fracPart = reducedInt;
+                        shift--;
+                    }
+                }
+
+                // concat the fractional part, padding the remainder with zeros
+                p = number.Digits + precision;
+                while (digits <= p && digits < end) {
+                    fracPart *= 10;
+                    fracPart = ModF(fracPart, out reducedInt);
+                    *digits++ = (char)((int)reducedInt + '0');
+                }
+
+                // round the result if necessary
+                digits = p;
+                *p = (char)(*p + 5);
+                while (*p > '9') {
+                    *p = '0';
+                    if (p > number.Digits)
+                        ++*--p;
+                    else {
+                        *p = '1';
+                        shift++;
+                    }
+                }
+
+                number.Scale = shift;
+                *digits = '\0';
+            }
+        }
+
         static void RoundNumber (ref Number number, int pos) {
             var digits = number.Digits;
             int i = 0;
@@ -820,6 +980,27 @@ namespace System.Text.Formatting {
             return rem;
         }
 
+        static double ModF (double value, out double intPart) {
+            intPart = (int)value;
+            return value - intPart;
+        }
+
+        static void ExplodeDouble (double value, out uint sign, out uint exp, out uint mantHi, out uint mantLo) {
+            var bits = *(ulong*)&value;
+            if (BitConverter.IsLittleEndian) {
+                mantLo = (uint)(bits & 0xFFFFFFFF);         // bits 0 - 31
+                mantHi = (uint)((bits >> 32) & 0xFFFFF);    // bits 32 - 51
+                exp = (uint)((bits >> 52) & 0x7FF);         // bits 52 - 62
+                sign = (uint)((bits >> 63) & 0x1);          // bit 63
+            }
+            else {
+                sign = (uint)(bits & 0x1);                  // bit 0
+                exp = (uint)((bits >> 1) & 0x7FF);          // bits 1 - 11
+                mantHi = (uint)((bits >> 12) & 0xFFFFF);    // bits 12 - 31
+                mantLo = (uint)(bits >> 32);                // bits 32 - 63
+            }
+        }
+
         static uint Low32 (ulong value) {
             return (uint)value;
         }
@@ -833,6 +1014,11 @@ namespace System.Text.Formatting {
             public int Scale;
             public int Sign;
             public char* Digits;
+
+            // useful for debugging
+            public override string ToString () {
+                return new string(Digits);
+            }
         }
 
         const int MaxNumberDigits = 50;
@@ -843,5 +1029,7 @@ namespace System.Text.Formatting {
         const int FloatPrecision = 7;
         const int DoublePrecision = 15;
         const int DecimalPrecision = 29;
+        const int ScaleNaN = unchecked((int)0x80000000);
+        const int ScaleInf = 0x7FFFFFFF;
     }
 }

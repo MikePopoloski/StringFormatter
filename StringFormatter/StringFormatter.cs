@@ -66,9 +66,11 @@ namespace System.Text.Formatting {
         }
 
         public void Append (float value, StringView format) {
+            Numeric.FormatSingle(this, value, format, culture);
         }
 
         public void Append (double value, StringView format) {
+            Numeric.FormatDouble(this, value, format, culture);
         }
 
         public void Append (decimal value, StringView format) {
