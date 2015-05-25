@@ -10,6 +10,8 @@
 // The switch statement in each Format() method looks ugly but gets
 // translated by the compiler into a nice direct jump table.
 
+using System.Runtime.CompilerServices;
+
 namespace System.Text.Formatting {
     partial class StringFormatter {<# for(int i = 1; i <= 8; i++) {
         var simpleName = "Arg" + i;
@@ -47,6 +49,7 @@ namespace System.Text.Formatting {
     <#}#>
     }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
 <#for(int j = 0; j < i; j++) { #>                case <#=j#>: formatter.AppendGeneric<T<#=j#>>(t<#=j#>, format); break;

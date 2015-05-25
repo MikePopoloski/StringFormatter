@@ -943,7 +943,7 @@ namespace System.Text.Formatting {
             var buffer = stackalloc char[DecimalPrecision + 1];
             var p = buffer + DecimalPrecision;
             while ((Mid32(value) | High32(value)) != 0)
-                p = Int32ToDecChars(p, DecDivMod(ref value), 9);
+                p = Int32ToDecChars(p, DecDivMod((uint*)&value), 9);
 
             p = Int32ToDecChars(p, Low32(value), 0);
 
@@ -1006,18 +1006,15 @@ namespace System.Text.Formatting {
             return rem;
         }
 
-        static uint D32DivMod (uint high32, uint* low32) {
-            var n = (ulong)high32 << 32 | *low32;
-            *low32 = (uint)(n / 1000000000);
-            return (uint)(n % 1000000000);
-        }
-
-        static uint DecDivMod (ref decimal value) {
-            fixed (decimal* ptr = &value)
-            {
-                var uptr = (uint*)ptr;
-                return D32DivMod(D32DivMod(D32DivMod(0, uptr + 1), uptr + 3), uptr + 2);
-            }
+        // divide a decimal value by 1E9 (in place) and return the remainder
+        static uint DecDivMod (uint* value) {
+            ulong n = *(value + 1);
+            *(value + 1) = (uint)(n / OneBillion);
+            n = (n % OneBillion) << 32 | *(value + 3);
+            *(value + 3) = (uint)(n / OneBillion);
+            n = (n % OneBillion) << 32 | *(value + 2);
+            *(value + 2) = (uint)(n / OneBillion);
+            return (uint)(n % OneBillion);
         }
 
         static double ModF (double value, out double intPart) {
@@ -1088,5 +1085,6 @@ namespace System.Text.Formatting {
         const int DecimalPrecision = 29;
         const int ScaleNaN = unchecked((int)0x80000000);
         const int ScaleInf = 0x7FFFFFFF;
+        const int OneBillion = 1000000000;
     }
 }

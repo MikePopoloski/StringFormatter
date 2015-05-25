@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace System.Text.Formatting {
     public unsafe partial class StringFormatter {
@@ -121,7 +122,13 @@ namespace System.Text.Formatting {
             {
                 var curr = formatPtr;
                 var end = curr + format.Length;
-                while (AppendSegment(ref curr, end, ref args)) ;
+                var segmentsLeft = false;
+                do {
+                    CheckCapacity((int)(end - curr));
+                    fixed (char* bufferPtr = buffer)
+                        segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref args);
+                }
+                while (!segmentsLeft);
             }
         }
 
@@ -129,12 +136,13 @@ namespace System.Text.Formatting {
             return string.Concat(buffer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void CheckCapacity (int count) {
             if (currentCount + count > buffer.Length)
                 Array.Resize(ref buffer, buffer.Length * 2);
         }
 
-        bool AppendSegment<T>(ref char* currRef, char* end, ref T args) where T : IArgSet {
+        bool AppendSegment<T>(ref char* currRef, char* end, char* dest, ref T args) where T : IArgSet {
             char* curr = currRef;
             char c = '\x0';
             while (curr < end) {
@@ -156,7 +164,8 @@ namespace System.Text.Formatting {
                         break;
                 }
 
-                Append(c);
+                *dest++ = c;
+                currentCount++;
             }
 
             if (curr == end)
@@ -232,7 +241,7 @@ namespace System.Text.Formatting {
                 // format without any specifier
                 args.Format(this, index, StringView.Empty);
             }
-            
+
             // finish off padding, if necessary
             var padding = width - (currentCount - oldCount);
             if (padding > 0) {
@@ -255,6 +264,7 @@ namespace System.Text.Formatting {
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AppendGeneric<T>(IntPtr ptr, StringView format) {
             // ptr here is a pointer to the parameter we want to format; for
             // simple value types we can cast the pointer directly, but for
@@ -337,6 +347,7 @@ namespace System.Text.Formatting {
             return value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static char SkipWhitespace (ref char* currRef, char* end) {
             char* curr = currRef;
             while (curr < end && *curr == ' ') curr++;

@@ -8,6 +8,8 @@
 // The switch statement in each Format() method looks ugly but gets
 // translated by the compiler into a nice direct jump table.
 
+using System.Runtime.CompilerServices;
+
 namespace System.Text.Formatting {
     partial class StringFormatter {
         public void AppendFormat<T0>(string format, T0 arg0) {
@@ -60,6 +62,7 @@ namespace System.Text.Formatting {
             this.t0 = *(IntPtr*)&t0;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -78,6 +81,7 @@ namespace System.Text.Formatting {
             this.t1 = *(IntPtr*)&t1;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -99,6 +103,7 @@ namespace System.Text.Formatting {
             this.t2 = *(IntPtr*)&t2;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -123,6 +128,7 @@ namespace System.Text.Formatting {
             this.t3 = *(IntPtr*)&t3;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -150,6 +156,7 @@ namespace System.Text.Formatting {
             this.t4 = *(IntPtr*)&t4;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -180,6 +187,7 @@ namespace System.Text.Formatting {
             this.t5 = *(IntPtr*)&t5;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -213,6 +221,7 @@ namespace System.Text.Formatting {
             this.t6 = *(IntPtr*)&t6;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
@@ -249,6 +258,7 @@ namespace System.Text.Formatting {
             this.t7 = *(IntPtr*)&t7;
         }
 
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringFormatter formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
