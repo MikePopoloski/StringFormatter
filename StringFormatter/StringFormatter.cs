@@ -9,7 +9,6 @@ namespace System.Text.Formatting {
         CachedCulture culture;
         char[] buffer;
         int currentCount;
-        List<char> specifierBuffer;
 
         public StringFormatter ()
             : this(256) {
@@ -18,17 +17,57 @@ namespace System.Text.Formatting {
         public StringFormatter (int capacity) {
             buffer = new char[capacity];
             culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
-
-            specifierBuffer = new List<char>();
         }
 
         public void Append (char c) {
+            CheckCapacity(1);
             buffer[currentCount++] = c;
         }
 
         public void Append (char c, int count) {
-            for (int i = 0; i < count; i++)
-                buffer[currentCount++] = c;
+            CheckCapacity(count);
+            fixed (char* b = &buffer[currentCount])
+            {
+                var ptr = b;
+                for (int i = 0; i < count; i++)
+                    *ptr++ = c;
+                currentCount += count;
+            }
+        }
+
+        public void Append (string value) {
+            Append(value, 0, value.Length);
+        }
+
+        public void Append (string value, int startIndex, int count) {
+            CheckCapacity(count);
+            fixed (char* s = value)
+            fixed (char* b = &buffer[currentCount])
+            {
+                var src = s + startIndex;
+                var dest = b;
+                for (int i = 0; i < count; i++)
+                    *dest++ = *src++;
+                currentCount += count;
+            }
+        }
+
+        public void Append (char* str, int count) {
+            CheckCapacity(count);
+            fixed (char* b = &buffer[currentCount])
+            {
+                var dest = b;
+                for (int i = 0; i < count; i++)
+                    *dest++ = *str++;
+                currentCount += count;
+            }
+        }
+
+        public void Append (bool value) {
+            if (value)
+                Append(TrueLiteral);
+            else
+                Append(FalseLiteral);
         }
 
         public void Append (sbyte value, StringView format) {
@@ -77,27 +116,6 @@ namespace System.Text.Formatting {
             Numeric.FormatDecimal(this, value, format, culture);
         }
 
-        public void Append (bool value) {
-            if (value)
-                Append(TrueLiteral);
-            else
-                Append(FalseLiteral);
-        }
-
-        public void Append (string str) {
-            foreach (var c in str)
-                buffer[currentCount++] = c;
-        }
-
-        public void Append (char* str, int count) {
-            for (int i = 0; i < count; i++)
-                buffer[currentCount++] = *str++;
-        }
-
-        public override string ToString () {
-            return string.Concat(buffer);
-        }
-        
         public void AppendArgSet<T>(string format, ref T args) where T : IArgSet {
             fixed (char* formatPtr = format)
             {
@@ -105,6 +123,15 @@ namespace System.Text.Formatting {
                 var end = curr + format.Length;
                 while (AppendSegment(ref curr, end, ref args)) ;
             }
+        }
+
+        public override string ToString () {
+            return string.Concat(buffer);
+        }
+
+        void CheckCapacity (int count) {
+            if (currentCount + count > buffer.Length)
+                Array.Resize(ref buffer, buffer.Length * 2);
         }
 
         bool AppendSegment<T>(ref char* currRef, char* end, ref T args) where T : IArgSet {
@@ -141,8 +168,9 @@ namespace System.Text.Formatting {
 
             // check for a spacing specifier
             c = SkipWhitespace(ref curr, end);
-            int width = 0;
+            var width = 0;
             var leftJustify = false;
+            var oldCount = currentCount;
             if (c == ',') {
                 curr++;
                 c = SkipWhitespace(ref curr, end);
@@ -160,10 +188,12 @@ namespace System.Text.Formatting {
             }
 
             // check for format specifier
-            var specifier = new StringView();
+            curr++;
             if (c == ':') {
-                specifierBuffer.Clear();
-                curr++;
+                var specifierBuffer = stackalloc char[MaxSpecifierSize];
+                var specifierEnd = specifierBuffer + MaxSpecifierSize;
+                var specifierPtr = specifierBuffer;
+
                 while (true) {
                     if (curr == end)
                         ThrowError();
@@ -181,25 +211,28 @@ namespace System.Text.Formatting {
                         if (curr < end && *curr == '}')
                             curr++;
                         else {
-                            curr--;
+                            // found the end of the specifier
+                            // kick off the format job
+                            var specifier = new StringView(specifierBuffer, (int)(specifierPtr - specifierBuffer));
+                            args.Format(this, index, specifier);
                             break;
                         }
                     }
 
-                    specifierBuffer.Add(c);
+                    if (specifierPtr == specifierEnd)
+                        ThrowError();
+                    *specifierPtr++ = c;
                 }
-
-                specifier.Data = string.Concat(specifierBuffer);
             }
+            else {
+                // no specifier. make sure we're at the end of the format block
+                if (c != '}')
+                    ThrowError();
 
-            if (c != '}')
-                ThrowError();
-            curr++;
-            currRef = curr;
-
-            var oldCount = currentCount;
-            args.Format(this, index, specifier);
-
+                // format without any specifier
+                args.Format(this, index, StringView.Empty);
+            }
+            
             // finish off padding, if necessary
             var padding = width - (currentCount - oldCount);
             if (padding > 0) {
@@ -207,6 +240,7 @@ namespace System.Text.Formatting {
                     Append(' ', padding);
                 else {
                     // copy the recently placed chars up in memory to make room for padding
+                    CheckCapacity(padding);
                     for (int i = currentCount - 1; i >= oldCount; i--)
                         buffer[i + padding] = buffer[i];
 
@@ -217,6 +251,7 @@ namespace System.Text.Formatting {
                 }
             }
 
+            currRef = curr;
             return true;
         }
 
@@ -319,6 +354,7 @@ namespace System.Text.Formatting {
 
         const int MaxArgs = 256;
         const int MaxSpacing = 1000000;
+        const int MaxSpecifierSize = 32;
 
         const string TrueLiteral = "True";
         const string FalseLiteral = "False";

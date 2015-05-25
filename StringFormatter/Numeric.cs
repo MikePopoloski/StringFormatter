@@ -759,28 +759,25 @@ namespace System.Text.Formatting {
                 return 'G';
             }
 
-            fixed (char* ptr = specifier.Data)
-            {
-                char* curr = ptr;
-                char first = *curr++;
-                if ((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z')) {
-                    int n = -1;
-                    char c = *curr++;
-                    if (c >= '0' && c <= '9') {
-                        n = c - '0';
+            char* curr = specifier.Data;
+            char first = *curr++;
+            if ((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z')) {
+                int n = -1;
+                char c = *curr++;
+                if (c >= '0' && c <= '9') {
+                    n = c - '0';
+                    c = *curr++;
+                    while (c >= '0' && c <= '9') {
+                        n = n * 10 + c - '0';
                         c = *curr++;
-                        while (c >= '0' && c <= '9') {
-                            n = n * 10 + c - '0';
-                            c = *curr++;
-                            if (n >= 10)
-                                break;
-                        }
+                        if (n >= 10)
+                            break;
                     }
+                }
 
-                    if (c == 0) {
-                        digits = n;
-                        return first;
-                    }
+                if (c == 0) {
+                    digits = n;
+                    return first;
                 }
             }
 

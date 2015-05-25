@@ -6,8 +6,18 @@ using System.Threading.Tasks;
 
 namespace System.Text.Formatting {
     public unsafe struct StringView {
-        public string Data;
+        public static readonly StringView Empty = new StringView();
 
-        public bool IsEmpty => string.IsNullOrEmpty(Data);
+        public readonly char* Data;
+        public readonly int Length;
+
+        public bool IsEmpty {
+            get { return Length > 0; }
+        }
+
+        public StringView (char* data, int length) {
+            Data = data;
+            Length = length;
+        }
     }
 }

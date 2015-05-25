@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -14,18 +15,39 @@ namespace Test {
     }
 
     class Program {
-        static readonly string formatTest = "Foo {0,13:p12} and bar!! {1,-15:P}bah";
+        static readonly string formatTest = "Foo {0,13:e12} and bar!! {1,-15:P}bah";
 
         static void Main (string[] args) {
+            var builder = new StringBuilder();
             var formatter = new StringFormatter();
             var v1 = 13.934987234987234987234m;
+            //var v1 = -14;
             var v2 = 9;
 
-            formatter.AppendFormat(formatTest, v1, v2);
-            Console.WriteLine(formatter.ToString());
+            var gcCount = GC.CollectionCount(0);
 
-            Console.WriteLine(formatTest, v1, v2);
+            var count = 1000000;
+            var timer = Stopwatch.StartNew();
+            for (int i = 0; i < count; i++)
+                formatter.AppendFormat(formatTest, v1, v2);
+            timer.Stop();
+            Console.WriteLine("Mine : {0} us/format", timer.ElapsedMilliseconds * 1000.0 / count);
+            Console.WriteLine("GCs  : {0}", GC.CollectionCount(0) - gcCount);
+            Console.WriteLine();
+
+            GC.Collect(2, GCCollectionMode.Forced, true);
+            gcCount = GC.CollectionCount(0);
+
+            timer = Stopwatch.StartNew();
+            for (int i = 0; i < count; i++)
+                builder.AppendFormat(formatTest, v1, v2);
+            timer.Stop();
+            Console.WriteLine("BCL  : {0} us/format", timer.ElapsedMilliseconds * 1000.0 / count);
+            Console.WriteLine("GCs  : {0}", GC.CollectionCount(0) - gcCount);
+
+#if DEBUG
             Console.ReadLine();
+#endif
         }
     }
 }
