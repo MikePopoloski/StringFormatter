@@ -62,7 +62,7 @@ namespace System.Text.Formatting {
         }
 
         public override string ToString () {
-            return string.Concat(buffer);
+            return new string(buffer, 0, currentCount);
         }
 
         public void Append (char c) {
@@ -411,31 +411,31 @@ namespace System.Text.Formatting {
 
         const string TrueLiteral = "True";
         const string FalseLiteral = "False";
-    }
 
-    // The point of this class is to allow us to generate a direct call to a known
-    // method on an unknown, unconstrained generic value type. Normally this would
-    // be impossible; you'd have to cast the generic argument and introduce boxing.
-    // Instead we pay a one-time startup cost to create a delegate that will forward
-    // the parameter to the appropriate method in a strongly typed fashion.
-    static class ValueHelper<T> {
-        public static Action<StringBuffer, T, StringView> Formatter = Prepare();
+        // The point of this class is to allow us to generate a direct call to a known
+        // method on an unknown, unconstrained generic value type. Normally this would
+        // be impossible; you'd have to cast the generic argument and introduce boxing.
+        // Instead we pay a one-time startup cost to create a delegate that will forward
+        // the parameter to the appropriate method in a strongly typed fashion.
+        static class ValueHelper<T> {
+            public static Action<StringBuffer, T, StringView> Formatter = Prepare();
 
-        static Action<StringBuffer, T, StringView> Prepare () {
-            // we only use this class for value types that also implement IStringFormattable
-            var type = typeof(T);
-            if (!type.IsValueType || !typeof(IStringFormattable).IsAssignableFrom(type))
-                return null;
+            static Action<StringBuffer, T, StringView> Prepare () {
+                // we only use this class for value types that also implement IStringFormattable
+                var type = typeof(T);
+                if (!type.IsValueType || !typeof(IStringFormattable).IsAssignableFrom(type))
+                    return null;
 
-            var result = typeof(ValueHelper<T>)
-                .GetMethod("Assign", BindingFlags.NonPublic | BindingFlags.Static)
-                .MakeGenericMethod(type)
-                .Invoke(null, null);
-            return (Action<StringBuffer, T, StringView>)result;
-        }
+                var result = typeof(ValueHelper<T>)
+                    .GetMethod("Assign", BindingFlags.NonPublic | BindingFlags.Static)
+                    .MakeGenericMethod(type)
+                    .Invoke(null, null);
+                return (Action<StringBuffer, T, StringView>)result;
+            }
 
-        static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
-            return (f, u, v) => u.Format(f, v);
+            static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
+                return (f, u, v) => u.Format(f, v);
+            }
         }
     }
 }
