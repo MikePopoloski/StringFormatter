@@ -258,7 +258,7 @@ namespace System.Text.Formatting {
                 NumberToCustomFormatString(formatter, ref number, specifier, culture);
         }
 
-        public static void FormatDecimal (StringFormatter formatter, decimal value, StringView specifier, CachedCulture culture) {
+        public static void FormatDecimal (StringFormatter formatter, uint* value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
@@ -936,19 +936,38 @@ namespace System.Text.Formatting {
             }
         }
 
-        static void DecimalToNumber (decimal value, ref Number number) {
+        static void DecimalToNumber (uint* value, ref Number number) {
+            // bit 31 of the decimal is the sign bit
+            // bits 16-23 contain the scale
+            number.Sign = (int)(*value >> 31);
+            number.Scale = (int)((*value >> 16) & 0xFF);
             number.Precision = DecimalPrecision;
-            number.Sign = value < 0 ? 1 : 0;
 
+            // loop for as long as the decimal is larger than 32 bits
             var buffer = stackalloc char[DecimalPrecision + 1];
             var p = buffer + DecimalPrecision;
-            while ((Mid32(value) | High32(value)) != 0)
-                p = Int32ToDecChars(p, DecDivMod((uint*)&value), 9);
+            var hi = *(value + 1);
+            var lo = *(value + 2);
+            var mid = *(value + 3);
 
-            p = Int32ToDecChars(p, Low32(value), 0);
+            while ((mid | hi) != 0) {
+                // keep dividing down by one billion at a time
+                ulong n = hi;
+                hi = (uint)(n / OneBillion);
+                n = (n % OneBillion) << 32 | mid;
+                mid = (uint)(n / OneBillion);
+                n = (n % OneBillion) << 32 | lo;
+                lo = (uint)(n / OneBillion);
+
+                // format this portion of the number
+                p = Int32ToDecChars(p, (uint)(n % OneBillion), 9);
+            }
+
+            // finish off with the low 32-bits of the decimal, if anything is left over
+            p = Int32ToDecChars(p, lo, 0);
 
             var len = (int)(buffer + DecimalPrecision - p);
-            number.Scale = len - DecScale(value);
+            number.Scale = len - number.Scale;
 
             var dest = number.Digits;
             while (--len >= 0)
@@ -1006,17 +1025,6 @@ namespace System.Text.Formatting {
             return rem;
         }
 
-        // divide a decimal value by 1E9 (in place) and return the remainder
-        static uint DecDivMod (uint* value) {
-            ulong n = *(value + 1);
-            *(value + 1) = (uint)(n / OneBillion);
-            n = (n % OneBillion) << 32 | *(value + 3);
-            *(value + 3) = (uint)(n / OneBillion);
-            n = (n % OneBillion) << 32 | *(value + 2);
-            *(value + 2) = (uint)(n / OneBillion);
-            return (uint)(n % OneBillion);
-        }
-
         static double ModF (double value, out double intPart) {
             intPart = Math.Truncate(value);
             return value - intPart;
@@ -1044,22 +1052,6 @@ namespace System.Text.Formatting {
 
         static uint High32 (ulong value) {
             return (uint)((value & 0xFFFFFFFF00000000) >> 32);
-        }
-
-        static uint Low32 (decimal value) {
-            return *((uint*)&value + 2);
-        }
-
-        static uint Mid32 (decimal value) {
-            return *((uint*)&value + 3);
-        }
-
-        static uint High32 (decimal value) {
-            return *((uint*)&value + 1);
-        }
-
-        static int DecScale (decimal value) {
-            return ((*((int*)&value)) >> 16) & 0xFF;
         }
 
         struct Number {

@@ -114,7 +114,7 @@ namespace System.Text.Formatting {
         }
 
         public void Append (decimal value, StringView format) {
-            Numeric.FormatDecimal(this, value, format, culture);
+            Numeric.FormatDecimal(this, (uint*)&value, format, culture);
         }
 
         public void AppendArgSet<T>(string format, ref T args) where T : IArgSet {
