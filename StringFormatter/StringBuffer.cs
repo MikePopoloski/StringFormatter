@@ -33,8 +33,36 @@ namespace System.Text.Formatting {
             culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
         }
 
+        public static void SetCustomFormatter<T>(Action<StringBuffer, T, StringView> formatter) {
+            ValueHelper<T>.Formatter = formatter;
+        }
+
         public void Clear () {
             currentCount = 0;
+        }
+
+        public void CopyTo (int sourceIndex, char[] destination, int destinationIndex, int count) {
+            if (destinationIndex + count > destination.Length)
+                throw new ArgumentOutOfRangeException();
+
+            fixed (char* destPtr = &destination[destinationIndex])
+                CopyTo(destPtr, sourceIndex, count);
+        }
+
+        public void CopyTo (char* dest, int sourceIndex, int count) {
+            if (sourceIndex + count > currentCount)
+                throw new ArgumentOutOfRangeException();
+
+            fixed (char* s = buffer)
+            {
+                var src = s + sourceIndex;
+                for (int i = 0; i < count; i++)
+                    *dest++ = *src++;
+            }
+        }
+
+        public override string ToString () {
+            return string.Concat(buffer);
         }
 
         public void Append (char c) {
@@ -144,30 +172,6 @@ namespace System.Text.Formatting {
                 }
                 while (segmentsLeft);
             }
-        }
-
-        public void CopyTo (int sourceIndex, char[] destination, int destinationIndex, int count) {
-            if (destinationIndex + count > destination.Length)
-                throw new ArgumentOutOfRangeException();
-
-            fixed (char* destPtr = &destination[destinationIndex])
-                CopyTo(destPtr, sourceIndex, count);
-        }
-
-        public void CopyTo (char* dest, int sourceIndex, int count) {
-            if (sourceIndex + count > currentCount)
-                throw new ArgumentOutOfRangeException();
-
-            fixed (char* s = buffer)
-            {
-                var src = s + sourceIndex;
-                for (int i = 0; i < count; i++)
-                    *dest++ = *src++;
-            }
-        }
-
-        public override string ToString () {
-            return string.Concat(buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -347,9 +351,9 @@ namespace System.Text.Formatting {
                 var value = __refvalue(tr, T);
 
                 // first, check to see if it's a value type implementing IStringFormattable
-                var forward = ValueHelper<T>.Forward;
-                if (forward != null)
-                    forward(this, value, format);
+                var formatter = ValueHelper<T>.Formatter;
+                if (formatter != null)
+                    formatter(this, value, format);
                 else {
                     // Only two cases left; reference type implementing IStringFormattable,
                     // or some unknown type that doesn't implement the interface at all.
@@ -357,7 +361,10 @@ namespace System.Text.Formatting {
                     // allocation, but presumably if the user is using us instead of the built-in
                     // formatting utilities they would rather be notified of this case, so
                     // we'll let the cast throw.
-                    ((IStringFormattable)value).Format(this, format);
+                    var formattable = value as IStringFormattable;
+                    if (formattable == null)
+                        throw new InvalidOperationException();
+                    formattable.Format(this, format);
                 }
             }
         }
@@ -412,7 +419,7 @@ namespace System.Text.Formatting {
     // Instead we pay a one-time startup cost to create a delegate that will forward
     // the parameter to the appropriate method in a strongly typed fashion.
     static class ValueHelper<T> {
-        public static readonly Action<StringBuffer, T, StringView> Forward = Prepare();
+        public static Action<StringBuffer, T, StringView> Formatter = Prepare();
 
         static Action<StringBuffer, T, StringView> Prepare () {
             // we only use this class for value types that also implement IStringFormattable

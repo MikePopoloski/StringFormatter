@@ -8,10 +8,8 @@ using System.Text.Formatting;
 using System.Threading.Tasks;
 
 namespace Test {
-    struct Blah : IStringFormattable {
-        public void Format (StringBuffer formatter, StringView format) {
-            formatter.Append("BLAH!");
-        }
+    struct Blah {
+        public int Thing;
     }
 
     class Program {
@@ -29,10 +27,23 @@ namespace Test {
             Console.WriteLine(f.ToString());
             Console.WriteLine(formatTest, v1, v2);
 
+            // test custom formatters
+            StringBuffer.SetCustomFormatter<Blah>(CustomFormat);
+            f.Clear();
+            f.AppendFormat("Hello {0:yes}{0:no}", new Blah { Thing = 42 });
+            Console.WriteLine(f.ToString());
+
             PerfTest();
 #if DEBUG
             Console.ReadLine();
 #endif
+        }
+
+        static void CustomFormat (StringBuffer buffer, Blah blah, StringView format) {
+            if (format == "yes")
+                buffer.Append("World!");
+            else
+                buffer.Append("(Goodbye)");
         }
 
         static void PerfTest () {
@@ -42,7 +53,7 @@ namespace Test {
             GC.Collect(2, GCCollectionMode.Forced, true);
             var gcCount = GC.CollectionCount(0);
             var timer = Stopwatch.StartNew();
-            
+
             for (int k = 0; k < mul; k++) {
                 for (int i = 0; i < count; i++)
                     formatter.AppendFormat(formatTest, v1, v2);
@@ -56,7 +67,7 @@ namespace Test {
             GC.Collect(2, GCCollectionMode.Forced, true);
             gcCount = GC.CollectionCount(0);
             timer = Stopwatch.StartNew();
-            
+
             for (int k = 0; k < mul; k++) {
                 for (int i = 0; i < count; i++)
                     builder.AppendFormat(formatTest, v1, v2);
