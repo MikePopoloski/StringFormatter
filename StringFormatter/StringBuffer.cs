@@ -6,13 +6,26 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace System.Text.Formatting {
-    public unsafe partial class StringBuffer {
+    public interface IArgSet {
+        int Count { get; }
+        void Format (StringBuffer formatter, int index, StringView format);
+    }
+
+    public interface IStringFormattable {
+        void Format (StringBuffer formatter, StringView format);
+    }
+
+    public unsafe sealed partial class StringBuffer {
         CachedCulture culture;
         char[] buffer;
         int currentCount;
 
+        public int Count {
+            get { return currentCount; }
+        }
+
         public StringBuffer ()
-            : this(256) {
+            : this(DefaultCapacity) {
         }
 
         public StringBuffer (int capacity) {
@@ -45,16 +58,13 @@ namespace System.Text.Formatting {
         }
 
         public void Append (string value, int startIndex, int count) {
-            CheckCapacity(count);
             fixed (char* s = value)
-            fixed (char* b = &buffer[currentCount])
-            {
-                var src = s + startIndex;
-                var dest = b;
-                for (int i = 0; i < count; i++)
-                    *dest++ = *src++;
-                currentCount += count;
-            }
+                Append(s + startIndex, count);
+        }
+
+        public void Append (char[] values, int startIndex, int count) {
+            fixed (char* s = &values[startIndex])
+                Append(s, count);
         }
 
         public void Append (char* str, int count) {
@@ -133,6 +143,26 @@ namespace System.Text.Formatting {
                         segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref args);
                 }
                 while (segmentsLeft);
+            }
+        }
+
+        public void CopyTo (int sourceIndex, char[] destination, int destinationIndex, int count) {
+            if (destinationIndex + count > destination.Length)
+                throw new ArgumentOutOfRangeException();
+
+            fixed (char* destPtr = &destination[destinationIndex])
+                CopyTo(destPtr, sourceIndex, count);
+        }
+
+        public void CopyTo (char* dest, int sourceIndex, int count) {
+            if (sourceIndex + count > currentCount)
+                throw new ArgumentOutOfRangeException();
+
+            fixed (char* s = buffer)
+            {
+                var src = s + sourceIndex;
+                for (int i = 0; i < count; i++)
+                    *dest++ = *src++;
             }
         }
 
@@ -367,6 +397,7 @@ namespace System.Text.Formatting {
             throw new FormatException();
         }
 
+        const int DefaultCapacity = 32;
         const int MaxArgs = 256;
         const int MaxSpacing = 1000000;
         const int MaxSpecifierSize = 32;
@@ -399,14 +430,5 @@ namespace System.Text.Formatting {
         static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
             return (f, u, v) => u.Format(f, v);
         }
-    }
-
-    public interface IArgSet {
-        int Count { get; }
-        void Format (StringBuffer formatter, int index, StringView format);
-    }
-
-    public interface IStringFormattable {
-        void Format (StringBuffer formatter, StringView format);
     }
 }
