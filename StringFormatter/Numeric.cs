@@ -737,10 +737,14 @@ namespace System.Text.Formatting {
         }
 
         static char* Int32ToDecChars (char* p, uint value, int digits) {
-            while (--digits >= 0 || value != 0) {
+            while (value != 0) {
                 *--p = (char)(value % 10 + '0');
                 value /= 10;
+                digits--;
             }
+
+            while (--digits >= 0)
+                *--p = '0';
             return p;
         }
 

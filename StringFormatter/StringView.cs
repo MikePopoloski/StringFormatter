@@ -12,7 +12,7 @@ namespace System.Text.Formatting {
         public readonly int Length;
 
         public bool IsEmpty {
-            get { return Length > 0; }
+            get { return Length == 0; }
         }
 
         public StringView (char* data, int length) {

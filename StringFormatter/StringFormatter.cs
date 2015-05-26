@@ -125,10 +125,10 @@ namespace System.Text.Formatting {
                 var segmentsLeft = false;
                 do {
                     CheckCapacity((int)(end - curr));
-                    fixed (char* bufferPtr = buffer)
+                    fixed (char* bufferPtr = &buffer[currentCount])
                         segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref args);
                 }
-                while (!segmentsLeft);
+                while (segmentsLeft);
             }
         }
 
