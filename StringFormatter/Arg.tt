@@ -13,7 +13,7 @@
 using System.Runtime.CompilerServices;
 
 namespace System.Text.Formatting {
-    partial class StringFormatter {<# for(int i = 1; i <= 8; i++) {
+    partial class StringBuffer {<# for(int i = 1; i <= 8; i++) {
         var simpleName = "Arg" + i;
         var genericParams = "<T0";
         for (int j = 1; j < i; j++) {
@@ -26,6 +26,14 @@ namespace System.Text.Formatting {
         public void AppendFormat<#=genericParams#>(string format, T0 arg0<#for(int j = 1; j < i; j++) { #>, T<#=j#> arg<#=j#><#}#>) {
             var args = new <#=fullName#>(__makeref(arg0)<#for(int j = 1; j < i; j++) { #>, __makeref(arg<#=j#>)<#}#>);
             AppendArgSet(format, ref args);
+        }
+
+        public static string Format<#=genericParams#>(string format, T0 arg0<#for(int j = 1; j < i; j++) { #>, T<#=j#> arg<#=j#><#}#>) {
+            var buffer = Acquire(format.Length + <#=i * 8#>);
+            buffer.AppendFormat(format, arg0<#for(int j = 1; j < i; j++) { #>, arg<#=j#><#}#>);
+            var result = buffer.ToString();
+            Release(buffer);
+            return result;
         }
 <#}#>
     }
@@ -49,10 +57,10 @@ namespace System.Text.Formatting {
     <#}#>
     }
 
-	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Format (StringBuffer buffer, int index, StringView format) {
             switch (index) {
-<#for(int j = 0; j < i; j++) { #>                case <#=j#>: formatter.AppendGeneric<T<#=j#>>(t<#=j#>, format); break;
+<#for(int j = 0; j < i; j++) { #>                case <#=j#>: buffer.AppendGeneric<T<#=j#>>(t<#=j#>, format); break;
 <#}#>
             }
         }

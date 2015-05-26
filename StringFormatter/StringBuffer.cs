@@ -404,7 +404,30 @@ namespace System.Text.Formatting {
             throw new FormatException();
         }
 
+        static StringBuffer Acquire (int capacity) {
+            if (capacity <= MaxCachedSize) {
+                var buffer = CachedInstance;
+                if (buffer != null) {
+                    CachedInstance = null;
+                    buffer.Clear();
+                    buffer.CheckCapacity(capacity);
+                    return buffer;
+                }
+            }
+
+            return new StringBuffer(capacity);
+        }
+
+        static void Release (StringBuffer buffer) {
+            if (buffer.buffer.Length <= MaxCachedSize)
+                CachedInstance = buffer;
+        }
+
+        [ThreadStatic]
+        static StringBuffer CachedInstance;
+
         const int DefaultCapacity = 32;
+        const int MaxCachedSize = 360;  // same as BCL's StringBuilderCache
         const int MaxArgs = 256;
         const int MaxSpacing = 1000000;
         const int MaxSpecifierSize = 32;

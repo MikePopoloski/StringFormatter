@@ -33,6 +33,9 @@ namespace Test {
             f.AppendFormat("Hello {0:yes}{0:no}", new Blah { Thing = 42 });
             Console.WriteLine(f.ToString());
 
+            // test static convenience method
+            Console.WriteLine(StringBuffer.Format(formatTest, v1, v2));
+
             PerfTest();
 #if DEBUG
             Console.ReadLine();
