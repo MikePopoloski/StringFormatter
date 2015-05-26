@@ -20,6 +20,10 @@ namespace System.Text.Formatting {
             culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
         }
 
+        public void Clear () {
+            currentCount = 0;
+        }
+
         public void Append (char c) {
             CheckCapacity(1);
             buffer[currentCount++] = c;

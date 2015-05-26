@@ -2,6 +2,7 @@
 
 namespace System.Text.Formatting {
     // caches formatting information from culture data
+    // some of the accessors on NumberFormatInfo allocate copies of their data
     sealed class CachedCulture {
         public readonly NumberFormatData CurrencyData;
         public readonly NumberFormatData FixedData;
