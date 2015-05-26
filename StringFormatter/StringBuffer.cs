@@ -6,16 +6,16 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace System.Text.Formatting {
-    public unsafe partial class StringFormatter {
+    public unsafe partial class StringBuffer {
         CachedCulture culture;
         char[] buffer;
         int currentCount;
 
-        public StringFormatter ()
+        public StringBuffer ()
             : this(256) {
         }
 
-        public StringFormatter (int capacity) {
+        public StringBuffer (int capacity) {
             buffer = new char[capacity];
             culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
         }
@@ -381,9 +381,9 @@ namespace System.Text.Formatting {
     // Instead we pay a one-time startup cost to create a delegate that will forward
     // the parameter to the appropriate method in a strongly typed fashion.
     static class ValueHelper<T> {
-        public static readonly Action<StringFormatter, T, StringView> Forward = Prepare();
+        public static readonly Action<StringBuffer, T, StringView> Forward = Prepare();
 
-        static Action<StringFormatter, T, StringView> Prepare () {
+        static Action<StringBuffer, T, StringView> Prepare () {
             // we only use this class for value types that also implement IStringFormattable
             var type = typeof(T);
             if (!type.IsValueType || !typeof(IStringFormattable).IsAssignableFrom(type))
@@ -393,20 +393,20 @@ namespace System.Text.Formatting {
                 .GetMethod("Assign", BindingFlags.NonPublic | BindingFlags.Static)
                 .MakeGenericMethod(type)
                 .Invoke(null, null);
-            return (Action<StringFormatter, T, StringView>)result;
+            return (Action<StringBuffer, T, StringView>)result;
         }
 
-        static Action<StringFormatter, U, StringView> Assign<U>() where U : IStringFormattable {
+        static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
             return (f, u, v) => u.Format(f, v);
         }
     }
 
     public interface IArgSet {
         int Count { get; }
-        void Format (StringFormatter formatter, int index, StringView format);
+        void Format (StringBuffer formatter, int index, StringView format);
     }
 
     public interface IStringFormattable {
-        void Format (StringFormatter formatter, StringView format);
+        void Format (StringBuffer formatter, StringView format);
     }
 }

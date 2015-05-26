@@ -45,7 +45,7 @@
     <Compile Include="CustomNumeric.cs" />
     <Compile Include="Numeric.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StringFormatter.cs" />
+    <Compile Include="StringBuffer.cs" />
     <Compile Include="StringView.cs" />
   </ItemGroup>
   <ItemGroup>

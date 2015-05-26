@@ -11,7 +11,7 @@
 using System.Runtime.CompilerServices;
 
 namespace System.Text.Formatting {
-    partial class StringFormatter {
+    partial class StringBuffer {
         public void AppendFormat<T0>(string format, T0 arg0) {
             var args = new Arg1<T0>(__makeref(arg0));
             AppendArgSet(format, ref args);
@@ -63,7 +63,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
             }
@@ -82,7 +82,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;
@@ -104,7 +104,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;
@@ -129,7 +129,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;
@@ -157,7 +157,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;
@@ -188,7 +188,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;
@@ -222,7 +222,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;
@@ -259,7 +259,7 @@ namespace System.Text.Formatting {
         }
 
 	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringFormatter formatter, int index, StringView format) {
+        public void Format (StringBuffer formatter, int index, StringView format) {
             switch (index) {
                 case 0: formatter.AppendGeneric<T0>(t0, format); break;
                 case 1: formatter.AppendGeneric<T1>(t1, format); break;

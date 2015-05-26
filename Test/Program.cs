@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Test {
     struct Blah : IStringFormattable {
-        public void Format (StringFormatter formatter, StringView format) {
+        public void Format (StringBuffer formatter, StringView format) {
             formatter.Append("BLAH!");
         }
     }
@@ -24,7 +24,7 @@ namespace Test {
         const double v2 = 0;
 
         static void Main (string[] args) {
-            var f = new StringFormatter();
+            var f = new StringBuffer();
             f.AppendFormat(formatTest, v1, v2);
             Console.WriteLine(f.ToString());
             Console.WriteLine(formatTest, v1, v2);
@@ -36,7 +36,7 @@ namespace Test {
         }
 
         static void PerfTest () {
-            var formatter = new StringFormatter();
+            var formatter = new StringBuffer();
             var builder = new StringBuilder();
 
             GC.Collect(2, GCCollectionMode.Forced, true);
