@@ -41,6 +41,7 @@ Each argument | 0 | 4 | The BCL calls `ToString()` on each argument.
 `ToString` | 1 | 1 | No way around it, if you want a `string` instance you need to allocate.
 
 Tally them up, we get the following totals:
+
 |    | Mine | BCL
 ---|---|---
 First Time | 7 | 21
