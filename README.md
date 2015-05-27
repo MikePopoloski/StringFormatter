@@ -71,7 +71,7 @@ var result = buffer.ToString();
 place, `StringBuffer` caches the culture during initialization and all subsequent formatting calls use it automatically.
 If for some reason you want to mix and match strings for different cultures in the same buffer, you'll have to manage that yourself.
 
-If you want to avoid even the one allocation incurred by calling `ToString()` on the result of the `StringBuffer`, you can make use
+(*) If you want to avoid even the one allocation incurred by calling `ToString()` on the result of the `StringBuffer`, you can make use
 of the `CopyTo` methods. These provides methods to copy the internal data to either managed buffers or to an arbitrary char pointer.
 You can allocate stack memory or native heap memory and avoid any GC overhead entirely on a per-string basis:
 
