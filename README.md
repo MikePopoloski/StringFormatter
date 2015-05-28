@@ -35,7 +35,7 @@ Let's look at the allocations performed by the previous example and compare them
 ---|---|---|---
 Parameters | 0 | 1+4 | Boxing value types plus `params[]` array allocation
 static `Format()` cache | 1 | 1 | Allocating a new `StringBuffer` / `StringBuilder` (will be cached in both cases)
-Constructor | 5 | 1 | `StringBuffer` caches all `CultureInfo` at creation time. `StringBuilder` only needs to allocate its underlying buffer.
+Constructor | 1 | 1 | Allocation of the backing `char[]` array.
 Format specifiers | 0 | 3*3 | In the BCL, each specifier in the format string results in a new `StringBuilder` allocation, an underlying buffer allocation, and then a `ToString()` call.
 Each argument | 0 | 4 | The BCL calls `ToString()` on each argument.
 `ToString` | 1 | 1 | No way around it, if you want a `string` instance you need to allocate.
@@ -44,7 +44,7 @@ Tally them up, we get the following totals:
 
 |    | Mine | BCL
 ---|---|---
-First Time | 7 | 21
+First Time | 3 | 21
 Each Additional | 1 | 19
 
 At the steady state, `StringBuffer` requires 1 allocation per format call, regardless of the number of arguments. `StringBuilder` requires 2 + 5n, where n is the number of arguments.
