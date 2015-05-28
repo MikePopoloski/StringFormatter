@@ -4,6 +4,8 @@ namespace System.Text.Formatting {
     // caches formatting information from culture data
     // some of the accessors on NumberFormatInfo allocate copies of their data
     sealed class CachedCulture {
+        public readonly CultureInfo Culture;
+
         public readonly NumberFormatData CurrencyData;
         public readonly NumberFormatData FixedData;
         public readonly NumberFormatData NumberData;
@@ -30,7 +32,10 @@ namespace System.Text.Formatting {
 
         public readonly int DecimalBufferSize;
 
-        public CachedCulture (NumberFormatInfo info) {
+        public CachedCulture (CultureInfo culture) {
+            Culture = culture;
+
+            var info = culture.NumberFormat;
             CurrencyData = new NumberFormatData(
                 info.CurrencyDecimalDigits,
                 info.NegativeSign,

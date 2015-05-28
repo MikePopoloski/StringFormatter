@@ -24,13 +24,28 @@ namespace System.Text.Formatting {
             get { return currentCount; }
         }
 
+        public CultureInfo Culture {
+            get { return culture.Culture; }
+            set {
+                if (culture.Culture == value)
+                    return;
+
+                if (value == CultureInfo.InvariantCulture)
+                    culture = CachedInvariantCulture;
+                else if (value == CachedCurrentCulture.Culture)
+                    culture = CachedCurrentCulture;
+                else
+                    culture = new CachedCulture(value);
+            }
+        }
+
         public StringBuffer ()
             : this(DefaultCapacity) {
         }
 
         public StringBuffer (int capacity) {
             buffer = new char[capacity];
-            culture = new CachedCulture(CultureInfo.CurrentCulture.NumberFormat);
+            culture = CachedCurrentCulture;
         }
 
         public static void SetCustomFormatter<T>(Action<StringBuffer, T, StringView> formatter) {
@@ -66,8 +81,7 @@ namespace System.Text.Formatting {
         }
 
         public void Append (char c) {
-            CheckCapacity(1);
-            buffer[currentCount++] = c;
+            Append(c, 1);
         }
 
         public void Append (char c, int count) {
@@ -425,6 +439,9 @@ namespace System.Text.Formatting {
 
         [ThreadStatic]
         static StringBuffer CachedInstance;
+
+        static readonly CachedCulture CachedInvariantCulture = new CachedCulture(CultureInfo.InvariantCulture);
+        static readonly CachedCulture CachedCurrentCulture = new CachedCulture(CultureInfo.CurrentCulture);
 
         const int DefaultCapacity = 32;
         const int MaxCachedSize = 360;  // same as BCL's StringBuilderCache
