@@ -57,16 +57,20 @@ namespace System.Text.Formatting {
         }
 
         public void CopyTo (int sourceIndex, char[] destination, int destinationIndex, int count) {
-            if (destinationIndex + count > destination.Length)
-                throw new ArgumentOutOfRangeException();
+            if (destination == null)
+                throw new ArgumentNullException(nameof(destination));
+            if (destinationIndex + count > destination.Length || destinationIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(destinationIndex));
 
             fixed (char* destPtr = &destination[destinationIndex])
                 CopyTo(destPtr, sourceIndex, count);
         }
 
         public void CopyTo (char* dest, int sourceIndex, int count) {
-            if (sourceIndex + count > currentCount)
-                throw new ArgumentOutOfRangeException();
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count));
+            if (sourceIndex + count > currentCount || sourceIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(sourceIndex));
 
             fixed (char* s = buffer)
             {
@@ -85,6 +89,9 @@ namespace System.Text.Formatting {
         }
 
         public void Append (char c, int count) {
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count));
+
             CheckCapacity(count);
             fixed (char* b = &buffer[currentCount])
             {
@@ -96,15 +103,28 @@ namespace System.Text.Formatting {
         }
 
         public void Append (string value) {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
             Append(value, 0, value.Length);
         }
 
         public void Append (string value, int startIndex, int count) {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            if (startIndex < 0 || startIndex + count > value.Length)
+                throw new ArgumentOutOfRangeException(nameof(startIndex));
+
             fixed (char* s = value)
                 Append(s + startIndex, count);
         }
 
         public void Append (char[] values, int startIndex, int count) {
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+            if (startIndex < 0 || startIndex + count > values.Length)
+                throw new ArgumentOutOfRangeException(nameof(startIndex));
+
             fixed (char* s = &values[startIndex])
                 Append(s, count);
         }
@@ -174,6 +194,9 @@ namespace System.Text.Formatting {
         }
 
         public void AppendArgSet<T>(string format, ref T args) where T : IArgSet {
+            if (format == null)
+                throw new ArgumentNullException(nameof(format));
+
             fixed (char* formatPtr = format)
             {
                 var curr = formatPtr;
@@ -225,7 +248,7 @@ namespace System.Text.Formatting {
 
             var index = ParseNum(ref curr, end, MaxArgs);
             if (index >= args.Count)
-                ThrowError();
+                throw new FormatException(string.Format(SR.ArgIndexOutOfRange, index));
 
             // check for a spacing specifier
             c = SkipWhitespace(ref curr, end);
@@ -377,7 +400,7 @@ namespace System.Text.Formatting {
                     // we'll let the cast throw.
                     var formattable = value as IStringFormattable;
                     if (formattable == null)
-                        throw new InvalidOperationException();
+                        throw new InvalidOperationException(string.Format(SR.TypeNotFormattable, typeof(T)));
                     formattable.Format(this, format);
                 }
             }
@@ -415,7 +438,7 @@ namespace System.Text.Formatting {
         }
 
         static void ThrowError () {
-            throw new FormatException();
+            throw new FormatException(SR.InvalidFormatString);
         }
 
         static StringBuffer Acquire (int capacity) {

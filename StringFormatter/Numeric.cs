@@ -422,7 +422,7 @@ namespace System.Text.Formatting {
                     }
 
                 default:
-                    throw new FormatException();
+                    throw new FormatException(string.Format(SR.UnknownFormatSpecifier, format));
             }
         }
 
@@ -568,7 +568,7 @@ namespace System.Text.Formatting {
 
                         groupSizeCount += groups[groupIndex];
                         if (groupSizeCount < 0 || newBufferSize < 0)
-                            throw new ArgumentOutOfRangeException();
+                            throw new ArgumentOutOfRangeException(SR.InvalidGroupSizes);
                     }
 
                     if (groupSizeCount == 0)
