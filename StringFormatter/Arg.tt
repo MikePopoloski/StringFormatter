@@ -13,6 +13,9 @@
 using System.Runtime.CompilerServices;
 
 namespace System.Text.Formatting {
+    /// <summary>
+    /// A low-allocation version of the built-in <see cref="StringBuilder"/> type.
+    /// </summary>
     partial class StringBuffer {<# for(int i = 1; i <= 8; i++) {
         var simpleName = "Arg" + i;
         var genericParams = "<T0";
@@ -23,11 +26,25 @@ namespace System.Text.Formatting {
         var fullName = simpleName + genericParams;
     #>
 
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        /// </summary>
+        /// <param name="format">A composite format string.</param><#for(int j = 0; j < i; j++) {
+#>
+
+        /// <param name="arg<#=j#>">A value to format.</param><#}#>   
         public void AppendFormat<#=genericParams#>(string format, T0 arg0<#for(int j = 1; j < i; j++) { #>, T<#=j#> arg<#=j#><#}#>) {
             var args = new <#=fullName#>(__makeref(arg0)<#for(int j = 1; j < i; j++) { #>, __makeref(arg<#=j#>)<#}#>);
             AppendArgSet(format, ref args);
         }
 
+        /// <summary>
+        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        /// </summary>
+        /// <param name="format">A composite format string.</param><#for(int j = 0; j < i; j++) {
+#>
+
+        /// <param name="arg<#=j#>">A value to format.</param><#}#>   
         public static string Format<#=genericParams#>(string format, T0 arg0<#for(int j = 1; j < i; j++) { #>, T<#=j#> arg<#=j#><#}#>) {
             var buffer = Acquire(format.Length + <#=i * 8#>);
             buffer.AppendFormat(format, arg0<#for(int j = 1; j < i; j++) { #>, arg<#=j#><#}#>);
