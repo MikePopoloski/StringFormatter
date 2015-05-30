@@ -118,8 +118,8 @@ namespace System.Text.Formatting {
         /// <summary>
         /// Copies the contents of the buffer to the given array.
         /// </summary>
-        /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
         /// <param name="dest">A pointer to the destination array.</param>
+        /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
         /// <param name="count">The number of characters to copy.</param>
         public void CopyTo (char* dest, int sourceIndex, int count) {
             if (count < 0)
@@ -133,6 +133,26 @@ namespace System.Text.Formatting {
                 for (int i = 0; i < count; i++)
                     *dest++ = *src++;
             }
+        }
+
+        /// <summary>
+        /// Copies the contents of the buffer to the given byte array.
+        /// </summary>
+        /// <param name="dest">A pointer to the destination byte array.</param>
+        /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
+        /// <param name="count">The number of characters to copy.</param>
+        /// <param name="encoding">The encoding to use to convert characters to bytes.</param>
+        /// <returns>The number of bytes written to the destination.</returns>
+        public int CopyTo (byte* dest, int sourceIndex, int count, Encoding encoding) {
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count));
+            if (sourceIndex + count > currentCount || sourceIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            if (encoding == null)
+                throw new ArgumentNullException(nameof(encoding));
+
+            fixed (char* s = buffer)
+                return encoding.GetBytes(s, count, dest, count);
         }
 
         /// <summary>
@@ -357,10 +377,11 @@ namespace System.Text.Formatting {
                 var curr = formatPtr;
                 var end = curr + format.Length;
                 var segmentsLeft = false;
+                var prevArgIndex = 0;
                 do {
                     CheckCapacity((int)(end - curr));
                     fixed (char* bufferPtr = &buffer[currentCount])
-                        segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref args);
+                        segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref prevArgIndex, ref args);
                 }
                 while (segmentsLeft);
             }
@@ -372,7 +393,7 @@ namespace System.Text.Formatting {
                 Array.Resize(ref buffer, buffer.Length * 2);
         }
 
-        bool AppendSegment<T>(ref char* currRef, char* end, char* dest, ref T args) where T : IArgSet {
+        bool AppendSegment<T>(ref char* currRef, char* end, char* dest, ref int prevArgIndex, ref T args) where T : IArgSet {
             char* curr = currRef;
             char c = '\x0';
             while (curr < end) {
@@ -401,7 +422,11 @@ namespace System.Text.Formatting {
             if (curr == end)
                 return false;
 
-            var index = ParseNum(ref curr, end, MaxArgs);
+            int index;
+            if (*curr == '}')
+                index = prevArgIndex;
+            else
+                index = ParseNum(ref curr, end, MaxArgs);
             if (index >= args.Count)
                 throw new FormatException(string.Format(SR.ArgIndexOutOfRange, index));
 
@@ -490,6 +515,7 @@ namespace System.Text.Formatting {
                 }
             }
 
+            prevArgIndex = index + 1;
             currRef = curr;
             return true;
         }
