@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -216,6 +217,7 @@ namespace System.Text.Formatting {
                 NumberToCustomFormatString(formatter, ref number, specifier, culture);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FormatDouble (StringBuffer formatter, double value, StringView specifier, CachedCulture culture) {
             int digits;
             int precision = DoublePrecision;
@@ -258,6 +260,7 @@ namespace System.Text.Formatting {
                 NumberToCustomFormatString(formatter, ref number, specifier, culture);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FormatDecimal (StringBuffer formatter, uint* value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);

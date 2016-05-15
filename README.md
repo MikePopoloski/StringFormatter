@@ -118,6 +118,42 @@ also allocate a lot more so it generally ends up being a wash.
 There are a few cases where I know I'm significantly slower; for example, denormalized doubles aren't great. If your
 applications needs to format millions of denormalized numbers per second, you might want to consider sticking with the BCL.
 
+Here are some results obtained using BenchmarkDotNet for generating a fully formatted string:
+
+Machine info:
+```
+BenchmarkDotNet=v0.9.6.0
+OS=Microsoft Windows NT 6.2.9200.0
+Processor=Intel(R) Core(TM) i7-4770 CPU @ 3.40GHz, ProcessorCount=8
+Frequency=3312644 ticks, Resolution=301.8737 ns, Timer=TSC
+HostCLR=MS.NET 4.0.30319.42000, Arch=64-bit RELEASE [RyuJIT]
+JitModules=clrjit-v4.6.1078.0
+```
+
+The following test results compare `StringBuilder/StringFormat.AppendFormat` while returning a new allocated BCL string:
+
+Type=StringFormatBenchmark  Mode=Throughput  Platform=X64
+
+       Method |       Jit |      Median |    StdDev | Scaled |         Min |         Max |  Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
+------------- |---------- |------------ |---------- |------- |------------ |------------ |------- |------ |------ |------------------- |
+     Baseline | LegacyJit | 932.3745 ns | 6.5379 ns |   1.00 | 911.7104 ns | 941.6221 ns | 610.00 |     - |     - |             230.71 |
+     Baseline |    RyuJit | 936.3304 ns | 6.2145 ns |   1.00 | 929.3742 ns | 950.8991 ns | 629.69 |     - |     - |             238.11 |
+ StringBuffer | LegacyJit | 824.8445 ns | 4.3413 ns |   0.88 | 817.6467 ns | 834.4629 ns | 133.87 |     - |     - |              52.75 |
+ StringBuffer |    RyuJit | 887.2168 ns | 8.8965 ns |   0.95 | 869.2266 ns | 910.2819 ns | 143.00 |     - |     - |              56.35 |
+
+
+The following test results compare `StringBuilder/StringFormat.AppendFormat` without allocating, but rather reusing a target buffer for the string.
+The main point of this test is to confirm that `StringFormatter` is indeed completely allocation-free when such a behavior is desired:
+
+Type=NoAllocationBenchmark  Mode=Throughput  Platform=X64  
+
+       Method |       Jit |      Median |     StdDev | Scaled |         Min |         Max |  Gen 0 | Gen 1 | Gen 2 | Bytes Allocated/Op |
+------------- |---------- |------------ |----------- |------- |------------ |------------ |------- |------ |------ |------------------- |
+     Baseline | LegacyJit | 913.6370 ns | 10.0141 ns |   1.00 | 898.5009 ns | 934.0547 ns | 410.37 |     - |     - |             157.63 |
+     Baseline |    RyuJit | 920.6765 ns |  7.4793 ns |   1.00 | 903.9691 ns | 930.3559 ns | 401.64 |     - |     - |             154.28 |
+ NoAllocation | LegacyJit | 824.3390 ns |  5.8531 ns |   0.90 | 806.5347 ns | 833.2877 ns |      - |     - |     - |               0.11 |
+ NoAllocation |    RyuJit | 886.5322 ns |  3.7329 ns |   0.96 | 880.4307 ns | 895.9284 ns |      - |     - |     - |               0.11 |
+
 To Do
 -----
 
