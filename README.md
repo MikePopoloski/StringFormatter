@@ -18,6 +18,8 @@ it causing a steady churn of garbage.
 Quick Start
 -----------
 
+The library requires no installation, package management, or any other complicated distribution mechanism. Simply copy the [StringFormatter.cs](https://raw.githubusercontent.com/MikePopoloski/StringFormatter/master/StringFormatter.cs) file into your project and start using it.
+
 At its simplest, you can make use of the static `StringBuffer.Format` convenience method. The `StringBuffer`
 formatting methods accept all of the formatting features supported by the .NET BCL.
 
