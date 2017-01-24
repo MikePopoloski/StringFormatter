@@ -17,8 +17,10 @@ namespace System.Text.Formatting {
             if (value < 0 && !specifier.IsEmpty) {
                 // if we're negative and doing a hex format, mask out the bits for the conversion
                 char c = specifier.Data[0];
-                if (c == 'X' || c == 'x')
+                if (c == 'X' || c == 'x') {
                     FormatUInt32(formatter, (uint)(value & 0xFF), specifier, culture);
+                    return;
+                }
             }
 
             FormatInt32(formatter, value, specifier, culture);
@@ -28,8 +30,10 @@ namespace System.Text.Formatting {
             if (value < 0 && !specifier.IsEmpty) {
                 // if we're negative and doing a hex format, mask out the bits for the conversion
                 char c = specifier.Data[0];
-                if (c == 'X' || c == 'x')
+                if (c == 'X' || c == 'x') {
                     FormatUInt32(formatter, (uint)(value & 0xFFFF), specifier, culture);
+                    return;
+                }
             }
 
             FormatInt32(formatter, value, specifier, culture);
