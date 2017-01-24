@@ -521,68 +521,47 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AppendGeneric<T>(IntPtr ptr, StringView format) {
-            // ptr here is a pointer to the parameter we want to format; for
-            // simple value types we can cast the pointer directly, but for
-            // strings and unknown generic value types we need to pull them
-            // out via a typed reference
-
+        internal void AppendGeneric<T>(T value, StringView format) {
             // this looks gross, but T is known at JIT-time so this call tree
             // gets compiled down to a direct call with no branching
             if (typeof(T) == typeof(sbyte))
-                Append(*(sbyte*)ptr, format);
+                Append(*(sbyte*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(byte))
-                Append(*(byte*)ptr, format);
+                Append(*(byte*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(short))
-                Append(*(short*)ptr, format);
+                Append(*(short*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(ushort))
-                Append(*(ushort*)ptr, format);
+                Append(*(ushort*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(int))
-                Append(*(int*)ptr, format);
+                Append(*(int*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(uint))
-                Append(*(uint*)ptr, format);
+                Append(*(uint*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(long))
-                Append(*(long*)ptr, format);
+                Append(*(long*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(ulong))
-                Append(*(ulong*)ptr, format);
+                Append(*(ulong*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(float))
-                Append(*(float*)ptr, format);
+                Append(*(float*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(double))
-                Append(*(double*)ptr, format);
+                Append(*(double*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(decimal))
-                Append(*(decimal*)ptr, format);
+                Append(*(decimal*)Unsafe.AsPointer(ref value), format);
             else if (typeof(T) == typeof(bool))
-                Append(*(bool*)ptr);
+                Append(*(bool*)Unsafe.AsPointer(ref value));
             else if (typeof(T) == typeof(char))
-                Append(*(char*)ptr, format);
-            else if (typeof(T) == typeof(string)) {
-                var placeholder = default(T);
-                var tr = __makeref(placeholder);
-                *(IntPtr*)&tr = ptr;
-                Append(__refvalue(tr, string));
-            }
+                Append(*(char*)Unsafe.AsPointer(ref value), format);
+            else if (typeof(T) == typeof(string))
+                Append(Unsafe.As<string>(value));
             else {
-                // otherwise, we have an unknown type; extract it from the pointer
-                var placeholder = default(T);
-                var tr = __makeref(placeholder);
-                *(IntPtr*)&tr = ptr;
-                var value = __refvalue(tr, T);
-
                 // first, check to see if it's a value type implementing IStringFormattable
                 var formatter = ValueHelper<T>.Formatter;
                 if (formatter != null)
                     formatter(this, value, format);
                 else {
-                    // Only two cases left; reference type implementing IStringFormattable,
-                    // or some unknown type that doesn't implement the interface at all.
-                    // We could handle the latter case by calling ToString() on it and paying the
+                    // We could handle this case by calling ToString() on the object and paying the
                     // allocation, but presumably if the user is using us instead of the built-in
-                    // formatting utilities they would rather be notified of this case, so
-                    // we'll let the cast throw.
-                    var formattable = value as IStringFormattable;
-                    if (formattable == null)
-                        throw new InvalidOperationException(string.Format(SR.TypeNotFormattable, typeof(T)));
-                    formattable.Format(this, format);
+                    // formatting utilities they would rather be notified of this case, so we'll throw.
+                    throw new InvalidOperationException(string.Format(SR.TypeNotFormattable, typeof(T)));
                 }
             }
         }
@@ -667,17 +646,18 @@ namespace System.Text.Formatting {
             static Action<StringBuffer, T, StringView> Prepare () {
                 // we only use this class for value types that also implement IStringFormattable
                 var type = typeof(T);
-                if (!type.IsValueType || !typeof(IStringFormattable).IsAssignableFrom(type))
+                if (!typeof(IStringFormattable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
                     return null;
 
                 var result = typeof(ValueHelper<T>)
-                    .GetMethod("Assign", BindingFlags.NonPublic | BindingFlags.Static)
+                    .GetTypeInfo()
+                    .GetDeclaredMethod("Assign")
                     .MakeGenericMethod(type)
                     .Invoke(null, null);
                 return (Action<StringBuffer, T, StringView>)result;
             }
 
-            static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
+            public static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
                 return (f, u, v) => u.Format(f, v);
             }
         }

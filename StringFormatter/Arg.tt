@@ -34,7 +34,7 @@ namespace System.Text.Formatting {
 
         /// <param name="arg<#=j#>">A value to format.</param><#}#>   
         public void AppendFormat<#=genericParams#>(string format, T0 arg0<#for(int j = 1; j < i; j++) { #>, T<#=j#> arg<#=j#><#}#>) {
-            var args = new <#=fullName#>(__makeref(arg0)<#for(int j = 1; j < i; j++) { #>, __makeref(arg<#=j#>)<#}#>);
+            var args = new <#=fullName#>(arg0<#for(int j = 1; j < i; j++) { #>, arg<#=j#><#}#>);
             AppendArgSet(format, ref args);
         }
 
@@ -64,20 +64,20 @@ namespace System.Text.Formatting {
 #>
 
     unsafe struct <#=fullName#> : IArgSet {
-<#for(int j = 0; j < i; j++) { #>        IntPtr t<#=j#>;
+<#for(int j = 0; j < i; j++) { #>        T<#=j#> t<#=j#>;
 <#}#>
 
         public int Count => <#=i#>;
 
-        public <#=simpleName#> (TypedReference t0<#for(int j = 1; j < i; j++) { #>, TypedReference t<#=j#><#}#>) {
-    <#for(int j = 0; j < i; j++) { #>        this.t<#=j#> = *(IntPtr*)&t<#=j#>;
+        public <#=simpleName#> (T0 t0<#for(int j = 1; j < i; j++) { #>, T<#=j#> t<#=j#><#}#>) {
+    <#for(int j = 0; j < i; j++) { #>        this.t<#=j#> = t<#=j#>;
     <#}#>
     }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Format (StringBuffer buffer, int index, StringView format) {
             switch (index) {
-<#for(int j = 0; j < i; j++) { #>                case <#=j#>: buffer.AppendGeneric<T<#=j#>>(t<#=j#>, format); break;
+<#for(int j = 0; j < i; j++) { #>                case <#=j#>: buffer.AppendGeneric(t<#=j#>, format); break;
 <#}#>
             }
         }
