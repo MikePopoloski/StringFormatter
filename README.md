@@ -6,7 +6,7 @@ A zero-allocation* string formatting library for .NET applications.
 Motivation
 ----------
 
-The built-in string formatting facilities in .NET are robust and quite usable. Unfortunately, they also perform a ridiculous amount of GC allocations.
+The built-in string formatting facilities in .NET are robust and quite usable. Unfortunately, they also perform a ridiculous number of GC allocations.
 Mostly these are short lived, and on the desktop GC they generally aren't noticeable. On more constrained systems however, they can be painful.
 Additionally, if you're trying to track your GC usage via live reporting in your program, you might quickly notice that attempts to print out
 the current GC state cause additional allocations, defeating the entire attempt at instrumentation.
@@ -72,7 +72,7 @@ place, `StringBuffer` caches the culture during initialization and all subsequen
 If for some reason you want to mix and match strings for different cultures in the same buffer, you'll have to manage that yourself.
 
 (*) If you want to avoid even the one allocation incurred by calling `ToString()` on the result of the `StringBuffer`, you can make use
-of the `CopyTo` methods. These provides methods to copy the internal data to either managed buffers or to an arbitrary char pointer.
+of the `CopyTo` methods. These provide methods to copy the internal data to either managed buffers or to an arbitrary char pointer.
 You can allocate stack memory or native heap memory and avoid any GC overhead entirely on a per-string basis:
 
 ```csharp
@@ -116,7 +116,7 @@ versions. Their formatting routines tend to be faster thanks to having hand-code
 also allocate a lot more so it generally ends up being a wash.
 
 There are a few cases where I know I'm significantly slower; for example, denormalized doubles aren't great. If your
-applications needs to format millions of denormalized numbers per second, you might want to consider sticking with the BCL.
+application needs to format millions of denormalized numbers per second, you might want to consider sticking with the BCL.
 
 Here are some results obtained using BenchmarkDotNet for generating a fully formatted string:
 
